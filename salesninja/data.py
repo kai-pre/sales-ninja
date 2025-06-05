@@ -1,5 +1,6 @@
 ### Imports
 import pandas as pd
+import numpy as np
 import os
 
 
@@ -7,11 +8,18 @@ import os
 ### Class definition
 
 class SalesNinja():
-    def get_ml_data(self):
+    def get_ml_data(self, ratio = 0.2):
         """
         Fetch raw data and merge it for machine learning use
         """
-        data = pd.read_csv("../raw_data/FactSales.csv").drop(['CurrencyKey'], axis=1)
+        # Load less data for now to try and avoid crashes
+        skipratio = (1-ratio) # elements to skip
+
+        skipsize = int(3406088 * skipratio)
+        skipindices = np.random.choice(np.arange(1,3406088), (skipsize), replace = False)
+        skipindices
+
+        data = pd.read_csv("../raw_data/FactSales.csv", header = 0, skiprows = skipindices).drop(['CurrencyKey'], axis=1)
         data.set_index(['SalesKey'], inplace=True)
 
         data = data.merge(pd.read_csv(
@@ -68,11 +76,18 @@ class SalesNinja():
 
         return data
 
-    def get_dashboard_data(self):
+    def get_dashboard_data(self, ratio = 0.2):
         """
         Fetch raw data and merge it for dashboard use
         """
-        data = pd.read_csv("../raw_data/FactSales.csv").drop(['CurrencyKey'], axis=1)
+        # Load less data for now to try and avoid crashes
+        skipratio = (1-ratio) # elements to skip
+
+        skipsize = int(3406088 * skipratio)
+        skipindices = np.random.choice(np.arange(1,3406088), (skipsize), replace = False)
+        skipindices
+
+        data = pd.read_csv("../raw_data/FactSales.csv", header = 0, skiprows = skipindices).drop(['CurrencyKey'], axis=1)
         data.set_index(['SalesKey'], inplace=True)
 
         data = data.merge(pd.read_csv(
