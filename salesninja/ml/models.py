@@ -1,14 +1,17 @@
-##### loads a GPU-accelerated version of pandas, disable if this creates any problems!!
-
-%load_ext cudf.pandas
-
-#####
-
 ### Imports
+##### loads a GPU-accelerated version of pandas, disable if this creates any problems!!
+try:
+    import cudf.pandas
+    cudf.pandas.install()
+    print("works!")
+except:
+    pass
+#####
 import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import sys
 
 from sklearn.model_selection import cross_validate, cross_val_score, train_test_split, GridSearchCV, learning_curve, LearningCurveDisplay
 
@@ -19,6 +22,8 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 from xgboost import XGBRegressor
 from salesninja.ml.preprocessor import SimplePreprocessor
+
+
 
 
 
