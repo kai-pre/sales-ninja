@@ -32,7 +32,6 @@ class SalesNinja():
                 path.join(getcwd(), "raw_data", "DimDate.csv"),
                 usecols=[
                     "DateKey",
-                    "IsHoliday",
                     "IsWorkDay",
                     "CalendarWeekLabel",
                     "CalendarYear",
