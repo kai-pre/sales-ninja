@@ -126,7 +126,11 @@ class SalesNinja():
                 usecols=["StoreKey", "GeographyKey", "StoreType", "StoreName"]),
             on="StoreKey", how="left").merge(pd.read_csv(
                 path.join(getcwd(), "raw_data", "DimGeography.csv"),
-                usecols=["GeographyKey", "ContinentName"]),
+                usecols=["GeographyType",
+                    "ContinentName",
+                    "CityName",
+                    "StateProvinceName",
+                    "RegionCountryName",]),
             on="GeographyKey", how="left")
 
         return data
