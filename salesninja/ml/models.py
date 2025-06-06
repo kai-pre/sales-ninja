@@ -38,7 +38,8 @@ def initiate_model(X, y, modelclass = "xgb", preprocessor = "simple", test_size 
     else:
         return None
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = test_size)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size = test_size, shuffle = False)
 
     X_train_proc = preprocess.fit_transform(X_train)
     X_test_proc = preprocess.transform(X_test)
