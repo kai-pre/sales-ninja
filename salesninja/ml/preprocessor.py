@@ -14,17 +14,22 @@ class SimplePreprocessor():
     """
     Simple preprocessor to get started with ML quickly
     """
-    def __init__():
-        make_column_transformer([RobustScaler(), make_column_selector(dtype_include = "number")])
+    def __init__(self):
+        pass
+
+    def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        preprocessor = make_column_transformer([RobustScaler(), make_column_selector(dtype_include = "number")], remainder="passthrough")
+        df_processed = preprocessor.fit_transform(df)
+        return df_processed
 
 class SalesNinjaPreprocessor():
     """
     Custom preprocessor for Contoso dataset
     """
-    def __init__():
+    def __init__(self):
         pass
 
-    def fit_transform(df: pd.DataFrame) -> pd.DataFrame:
+    def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
         # Instantiate a SimpleImputer object with your strategy of choice
         imputer = SimpleImputer(strategy="constant", fill_value=0)
         # Call the "fit" method on the object
@@ -125,7 +130,7 @@ class SalesNinjaPreprocessor():
         ohe = OneHotEncoder(sparse_output=False)
 
         cols_to_encode = [
-        'IsWorkDay','IsHoliday','BrandName','StoreType','GeographyType','RegionCountryName'
+        'IsWorkDay','BrandName','StoreType','GeographyType','RegionCountryName'
         ]
         ohe.fit(df[cols_to_encode])
         df[ohe.get_feature_names_out()] = ohe.transform(df[cols_to_encode])
@@ -154,6 +159,9 @@ def preprocess_features(X: pd.DataFrame, simple:bool = True) -> np.ndarray:
     preprocessor = SimplePreprocessor() if simple else SalesNinjaPreprocessor()
     X_processed = preprocessor.fit_transform(X)
 
+    if simple:
+        X_processed = pd.DataFrame(X_processed)
+        X_processed.columns = X.columns
     print("\n🌗 X processed, with shape ", X_processed.shape)
 
     return X_processed
