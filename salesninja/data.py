@@ -1,13 +1,16 @@
 ### Imports
 import pandas as pd
 import numpy as np
-import os
+from os import getcwd, path
 
 
 
 ### Class definition
 
 class SalesNinja():
+    def __init__(self):
+        pass
+
     def get_ml_data(self, ratio = 0.2):
         """
         Fetch raw data and merge it for machine learning use
@@ -19,14 +22,14 @@ class SalesNinja():
         skipindices = np.random.choice(np.arange(1,3406088), (skipsize), replace = False)
         skipindices
 
-        data = pd.read_csv("../raw_data/FactSales.csv", header = 0, skiprows = skipindices).drop(['CurrencyKey'], axis=1)
-        data.set_index(['SalesKey'], inplace=True)
+        data = pd.read_csv(path.join(getcwd(), "raw_data", "FactSales.csv"), header = 0, skiprows = skipindices).drop(['CurrencyKey'], axis=1)
+        #data.set_index(['SalesKey'], inplace=True)
 
         data = data.merge(pd.read_csv(
-            "../raw_data/DimPromotion.csv",
+            path.join(getcwd(), "raw_data", "DimPromotion.csv"),
             usecols=["DiscountPercent", "PromotionKey"],
             ), on="PromotionKey", how="left",).merge(pd.read_csv(
-                "../raw_data/DimDate.csv",
+                path.join(getcwd(), "raw_data", "DimDate.csv"),
                 usecols=[
                     "DateKey",
                     "IsHoliday",
@@ -37,13 +40,7 @@ class SalesNinja():
                     "CalendarQuarterLabel",
                     "CalendarDayOfWeekNumber"],
             ), on="DateKey", how="left").merge(pd.read_csv(
-                "../raw_data/DimProductSubcategory.csv",
-                usecols=["ProductSubcategoryKey", "ProductCategoryKey"],
-            ), on="ProductSubcategoryKey", how="left").merge(pd.read_csv(
-                "../raw_data/DimProductCategory.csv",
-                usecols=["ProductCategoryKey"],
-            ), on="ProductCategoryKey", how="left").merge(pd.read_csv(
-                "../raw_data/DimProduct.csv",
+                path.join(getcwd(), "raw_data", "DimProduct.csv"),
                 usecols=[
                     "ProductKey",
                     "ProductSubcategoryKey",
@@ -55,7 +52,13 @@ class SalesNinja():
                     "WeightUnitMeasureID",
                     "StockTypeID"],
             ), on="ProductKey", how="left").merge(pd.read_csv(
-                "../raw_data/DimStore.csv",
+                path.join(getcwd(), "raw_data", "DimProductSubcategory.csv"),
+                usecols=["ProductSubcategoryKey", "ProductCategoryKey"],
+            ), on="ProductSubcategoryKey", how="left").merge(pd.read_csv(
+                path.join(getcwd(), "raw_data", "DimProductCategory.csv"),
+                usecols=["ProductCategoryKey"],
+            ), on="ProductCategoryKey", how="left").merge(pd.read_csv(
+                path.join(getcwd(), "raw_data", "DimStore.csv"),
                 usecols=[
                     "StoreKey",
                     "GeographyKey",
@@ -63,7 +66,7 @@ class SalesNinja():
                     "EmployeeCount",
                     "SellingAreaSize"],
             ), on="StoreKey", how="left").merge(pd.read_csv(
-                "../raw_data/DimGeography.csv",
+                path.join(getcwd(), "raw_data", "DimGeography.csv"),
                 usecols=[
                     "GeographyKey",
                     "GeographyType",
@@ -87,16 +90,17 @@ class SalesNinja():
         skipindices = np.random.choice(np.arange(1,3406088), (skipsize), replace = False)
         skipindices
 
-        data = pd.read_csv("../raw_data/FactSales.csv", header = 0, skiprows = skipindices).drop(['CurrencyKey'], axis=1)
-        data.set_index(['SalesKey'], inplace=True)
+        data = pd.read_csv(path.join(getcwd(), "raw_data", "FactSales.csv"), header = 0, skiprows = skipindices).drop(['CurrencyKey'], axis=1)
+        #data.set_index(['SalesKey'], inplace=True)
 
         data = data.merge(pd.read_csv(
-            "../raw_data/DimChannel.csv", usecols=["ChannelKey", "ChannelName"]),
-            on="channelKey",how="left").merge(pd.read_csv(
-                "../raw_data/DimPromotion.csv",
+            path.join(getcwd(), "raw_data", "DimChannel.csv"), usecols=["ChannelKey", "ChannelName"]),
+            left_on="channelKey",right_on="ChannelKey",how="left").rename(
+                columns={"channelKey": "ChannelKey"}).merge(pd.read_csv(
+                path.join(getcwd(), "raw_data", "DimPromotion.csv"),
                 usecols=["PromotionKey", "PromotionName", "PromotionType"]),
             on="PromotionKey", how="left").merge(pd.read_csv(
-                "../raw_data/DimDate.csv",
+                path.join(getcwd(), "raw_data", "DimDate.csv"),
                 usecols=[
                     "DateKey",
                     "CalendarYear",
@@ -106,22 +110,22 @@ class SalesNinja():
                     "CalendarDayOfWeekNumber",
                     "CalendarDayOfWeekLabel"]),
             on="DateKey", how="left").merge(pd.read_csv(
-                "../raw_data/DimProductSubcategory.csv",
-                usecols=[
-                    "ProductSubcategoryKey",
-                    "ProductSubcategoryName",
-                    "ProductCategoryKey"]),
-            on="ProductSubcategoryKey", how = "left").merge(pd.read_csv(
-                    "../raw_data/DimProductCategory.csv",
-                    usecols=["ProductCategoryKey", "ProductCategoryName"]),
-            on="ProductCategoryKey", how="left").merge(pd.read_csv(
-                "../raw_data/DimProduct.csv",
-                usecols=["ProductKey", "ProductName", "ProductSubcategoryKey"]),
+            path.join(getcwd(), "raw_data", "DimProduct.csv"),
+            usecols=["ProductKey", "ProductName", "ProductSubcategoryKey"]),
             on="ProductKey", how="left").merge(pd.read_csv(
-                "../raw_data/DimStore.csv",
+            path.join(getcwd(), "raw_data", "DimProductSubcategory.csv"),
+            usecols=[
+                "ProductSubcategoryKey",
+                "ProductSubcategoryName",
+                "ProductCategoryKey"]),
+            on="ProductSubcategoryKey", how = "left").merge(pd.read_csv(
+                path.join(getcwd(), "raw_data", "DimProductCategory.csv"),
+                usecols=["ProductCategoryKey", "ProductCategoryName"]),
+            on="ProductCategoryKey", how="left").merge(pd.read_csv(
+                path.join(getcwd(), "raw_data", "DimStore.csv"),
                 usecols=["StoreKey", "GeographyKey", "StoreType", "StoreName"]),
             on="StoreKey", how="left").merge(pd.read_csv(
-                "../raw_data/DimGeography.csv",
+                path.join(getcwd(), "raw_data", "DimGeography.csv"),
                 usecols=["GeographyKey", "ContinentName"]),
             on="GeographyKey", how="left")
 
@@ -131,14 +135,16 @@ class SalesNinja():
         """
         Fetch raw data and create merged csv file for machine learning
         """
-        self.get_ml_data().to_csv(filename)
+        filepath = path.join(getcwd(), "merged_data", filename)
+        self.get_ml_data().to_csv(filepath)
         print(f"Data saved to '{filename}'")
 
     def make_dashboard_csv(self, filename = "data_dashboard_merged.csv"):
         """
         Fetch raw data and create merged csv file for dashboard
         """
-        self.get_dashboard_data().to_csv(filename)
+        filepath = path.join(getcwd(), "merged_data", filename)
+        self.get_dashboard_data().to_csv(filepath)
         print(f"Data saved to '{filename}'")
 
     def get_custom_data(self, *args):
