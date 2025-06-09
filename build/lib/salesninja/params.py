@@ -3,9 +3,7 @@ import numpy as np
 
 ##################  VARIABLES  ##################
 DATA_SIZE = 0.2
-LOCAL_DATA_PATH = os.path.join(os.path.expanduser('~'), ".salesninja", "data")
-LOCAL_REGISTRY_PATH =  os.path.join(os.path.expanduser('~'), ".salesninja", "training_outputs")
-MODEL_TARGET = "local" #local, gcp, mlflow(?)
+MODEL_TARGET = "local" #local, gcp, mlflow
 GCP_SALESNINJA = "le-wagon-data-bootcamp"
 GCP_REGION = "europe-west1"
 BQ_DATASET = "dashboard_data"

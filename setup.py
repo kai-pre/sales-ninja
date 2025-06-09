@@ -8,6 +8,6 @@ requirements = [x.strip() for x in content]
 
 setup(name='salesninja',
       description="Python package for the Sales Ninja backend",
-      version='0.0.2',
+      version='0.0.4',
       packages=find_packages(),
       install_requires=requirements)
