@@ -17,8 +17,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-app.state.model = load_model()
-assert app.state.model is not None
+#app.state.model = load_model()
+#assert app.state.model is not None
 
 
 # Allowing all middleware is optional, but good practice for dev purposes
@@ -38,17 +38,31 @@ def root():
     return {'testing': "The API works!"}
 
 
-# http://127.0.0.1:8000/predict?starttime=2007-01-01&endtime=2009-12-31
+# http://127.0.0.1:8000/get_db_data?min_date=2007-01-01&max_date=2009-12-31
 @app.get("/get_db_data")
 def get_db_data(
-        starttime: str = "2007-01-01",
-        endtime: str = "2009-12-31",
+        min_date: str = "2007-01-01",
+        max_date: str = "2009-12-31",
     ):
     """
     Returns merged, pre-filtered data for the dashboard
     Assumes "starttime" and "endtime" is provided as a string by the user in "%Y-%m-%d" format
     """
-    querieddata = data.SalesNinja().get_db_data(starttime, endtime)
+    querieddata = data.SalesNinja().get_db_data(min_date, max_date)
+
+    return querieddata.to_dict()
+
+# http://127.0.0.1:8000/get_ml_data?min_date=2007-01-01&max_date=2009-12-31
+@app.get("/get_db_data")
+def get_ml_data(
+        min_date: str = "2007-01-01",
+        max_date: str = "2009-12-31",
+    ):
+    """
+    Returns merged, pre-filtered data for machine learning
+    Assumes "starttime" and "endtime" is provided as a string by the user in "%Y-%m-%d" format
+    """
+    querieddata = data.SalesNinja().get_ml_data(min_date, max_date)
 
     return querieddata.to_dict()
 
@@ -62,7 +76,6 @@ def predict(
     # get synthesis model
     # synthesize data for queried timerange
     # use prediction model to predict a y for the synthesized data
-
 
     prediction = app.state.model.predict(synthdata)
 

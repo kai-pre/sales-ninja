@@ -3,7 +3,6 @@
 try:
     import cudf.pandas
     cudf.pandas.install()
-    print("works!")
 except:
     pass
 #####

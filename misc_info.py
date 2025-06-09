@@ -1,0 +1,42 @@
+"""
+Index(['BrandName_A. Datum', 'BrandName_Adventure Works', 'BrandName_Contoso',
+       'BrandName_Fabrikam', 'BrandName_Litware', 'BrandName_N/A',
+       'BrandName_Northwind Traders', 'BrandName_Proseware',
+       'BrandName_Southridge Video', 'BrandName_Tailspin Toys',
+       'BrandName_The Phone Company', 'BrandName_Wide World Importers',
+       'CalendarYear', 'CityName', 'ClassID', 'ColorID', 'ContinentName',
+       'DateKey', 'DiscountAmount', 'DiscountPercent', 'DiscountQuantity',
+       'EmployeeCount', 'GeographyKey', 'GeographyType_City', 'IsHoliday_No',
+       'IsHoliday_Yes', 'IsWorkDay_WeekEnd', 'IsWorkDay_WorkDay',
+       'ProductCategoryKey', 'ProductKey', 'ProductSubcategoryKey',
+       'PromotionKey', 'RegionCountryName_Armenia',
+       'RegionCountryName_Australia', 'RegionCountryName_Bhutan',
+       'RegionCountryName_Canada', 'RegionCountryName_China',
+       'RegionCountryName_Denmark', 'RegionCountryName_France',
+       'RegionCountryName_Germany', 'RegionCountryName_Greece',
+       'RegionCountryName_India', 'RegionCountryName_Iran',
+       'RegionCountryName_Ireland', 'RegionCountryName_Italy',
+       'RegionCountryName_Japan', 'RegionCountryName_Kyrgyzstan',
+       'RegionCountryName_Malta', 'RegionCountryName_Pakistan',
+       'RegionCountryName_Poland', 'RegionCountryName_Portugal',
+       'RegionCountryName_Romania', 'RegionCountryName_Russia',
+       'RegionCountryName_Singapore', 'RegionCountryName_Slovenia',
+       'RegionCountryName_South Korea', 'RegionCountryName_Spain',
+       'RegionCountryName_Sweden', 'RegionCountryName_Switzerland',
+       'RegionCountryName_Syria', 'RegionCountryName_Taiwan',
+       'RegionCountryName_Thailand', 'RegionCountryName_Turkmenistan',
+       'RegionCountryName_United Kingdom', 'RegionCountryName_United States',
+       'RegionCountryName_the Netherlands', 'ReturnAmount', 'ReturnQuantity',
+       'SalesAmount', 'SalesQuantity', 'SellingAreaSize', 'StateProvinceName',
+       'StockTypeID', 'StoreKey', 'StoreType_Catalog', 'StoreType_Online',
+       'StoreType_Reseller', 'StoreType_Store', 'StyleID', 'TotalCost',
+       'UnitCost', 'UnitPrice', 'Weight(grams)', 'channelKey',
+       'cos_CalendarDayOfWeekNumber', 'cos_CalendarQuarterLabel',
+       'cos_MonthNumber', 'sin_CalendarDayOfWeekNumber',
+       'sin_CalendarQuarterLabel', 'sin_MonthNumber'],
+      dtype='object')
+
+
+
+
+"""
