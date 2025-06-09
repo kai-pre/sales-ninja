@@ -148,7 +148,7 @@ class SalesNinja():
         return data
 
 
-    def get_ml_data(self, ratio = 0.2):
+    def get_ml_data(self, ratio = 0.2, starttime = "2007-01-01", endtime = "2009-12-31"):
         """
         Fetch merged data for machine learning use
         """
@@ -164,7 +164,7 @@ class SalesNinja():
         return data
 
 
-    def get_db_data(self, ratio = 0.2):
+    def get_db_data(self, ratio = 0.2, starttime = "2007-01-01", endtime = "2009-12-31"):
         """
         Fetch merged data for dashboard use
         """

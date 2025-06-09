@@ -14,5 +14,6 @@ salesninja/dashboard/__init__.py
 salesninja/dashboard/main.py
 salesninja/ml/__init__.py
 salesninja/ml/models.py
-salesninja/ml/preprocessor.py
+salesninja/ml/preprocessing.py
 salesninja/ml/registry.py
+salesninja/ml/synthesis.py

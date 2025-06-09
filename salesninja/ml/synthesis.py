@@ -1,6 +1,7 @@
 # Imports
 
 
+
 def load_synthesis_model():
     """
     Load a synthesis model for the Contoso data, or create one if none exist
@@ -10,13 +11,13 @@ def load_synthesis_model():
 
 
 
-
 def create_synthetic_data(startdate, enddate):
     """
     Create synthetic data for the the defined date range, based on existing data
     """
     pass
     # return df
+
 
 
 def fetch_synthetic_Data():

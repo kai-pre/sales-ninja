@@ -21,9 +21,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 from xgboost import XGBRegressor
-from salesninja.ml.preprocessor import SimplePreprocessor
-
-
+from salesninja.ml.preprocessing import SimplePreprocessor
 
 
 

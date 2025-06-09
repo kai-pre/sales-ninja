@@ -15,12 +15,17 @@ class SimplePreprocessor():
     Simple preprocessor to get started with ML quickly
     """
     def __init__(self):
-        pass
+        self.preprocessor = preprocessor = make_column_transformer([RobustScaler(), make_column_selector(dtype_include = "number")], remainder="passthrough")
 
     def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        preprocessor = make_column_transformer([RobustScaler(), make_column_selector(dtype_include = "number")], remainder="passthrough")
-        df_processed = preprocessor.fit_transform(df)
+        df_processed = self.preprocessor.fit_transform(df)
         return df_processed
+
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        df_processed = self.preprocessor.transform(df)
+        return df_processed
+
+
 
 class SalesNinjaPreprocessor():
     """
@@ -48,7 +53,11 @@ class SalesNinjaPreprocessor():
         imputer.fit(df[['ProductCategoryKey']])
         df['ProductCategoryKey'] = imputer.transform(df[['ProductCategoryKey']])
 
+        # delete blank spaces in columns
+        df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+
         df['BrandName'] = df['BrandName'].fillna('N/A')
+
 
         #Basic column transforms
         #1. Promo key 1 means no discount. ALl other promo keys indicate some discount. We change promo keys to 1 and 0. 1 means no disc, 0 means disc
@@ -151,6 +160,9 @@ class SalesNinjaPreprocessor():
 
         return df
 
+    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
+        return self.fit_transform(df)
+
 
 
 def preprocess_features(X: pd.DataFrame, simple:bool = True) -> np.ndarray:
@@ -183,46 +195,9 @@ def extract_prediction_facts(X: pd.DataFrame, with_datekey = True):
     return X[["PromotionKey", "DiscountPercent", "CalendarYear", "CalendarQuarterLabel",
         "CalendarWeekLabel", "IsWorkDay", "MonthNumber", "CalendarDayOfWeekNumber"]]
 
-def generate_prediction_estimates(X: pd.DataFrame, factsize = 0.9):
-    """
-    Splits a dataframe by the split ratio, and
-    - extracts the prediction facts for the "test" set
-    - generates estimates for selected features, based on the variable distribution
-        of the "train" set.
-
-    Estimates are based on the distribution in the "train" set and are bootstrapped
-    (and stratified?).
-
-    Facts are: DateKey, PromotionKey, DiscountPercent, CalendarYear, CalendarQuarterLabel,
-    CalendarWeekLabel, IsWorkDay, MonthNumber, CalendarDayOfWeekNumber
-
-    Estimates are: 'channelKey', 'StoreKey', 'ProductKey',
-       'UnitCost', 'UnitPrice', 'SalesQuantity', 'ReturnQuantity',
-       'ReturnAmount', 'DiscountQuantity', 'DiscountAmount', 'TotalCost',
-       'SalesAmount', 'ProductSubcategoryKey', 'BrandName', 'ClassID', 'StyleID', 'ColorID',
-       'Weight', 'WeightUnitMeasureID', 'StockTypeID', 'ProductCategoryKey',
-       'GeographyKey', 'StoreType', 'EmployeeCount', 'SellingAreaSize',
-       'GeographyType', 'ContinentName', 'CityName', 'StateProvinceName',
-       'RegionCountryName'
-    """
-    splitindex = int(X.shape[0] * factsize)
-    X_true = X.iloc[:splitindex]
-    X_pred = X.iloc[splitindex:]
-
-    X_pred = extract_prediction_facts(X_pred, with_datekey = False)
-
-    X_pred_new = []
-    for line in X_pred:
-        pd.concat([X_pred_new, X_true.merge(line).sample(1)], ignore_index=True)
-
-    print(X_pred_new)
-
-    #return X_true, X_pred
-
 
 if __name__ == "__main__":
-    from salesninja.data import SalesNinja
-    generate_prediction_estimates(SalesNinja().get_ml_data())
+    pass
 
 
 """import pandas as pd

@@ -9,8 +9,6 @@ from dateutil.parser import parse
 from salesninja import data
 from salesninja.ml import *
 
-
-
 ### Main interface for SalesNinja dashboard
 def load_and_preprocess(min_date:str = "2007-01-01", max_data:str = "2009-12-31"):
     """
