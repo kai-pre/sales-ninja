@@ -4,7 +4,7 @@ import numpy as np
 import glob
 from os import getcwd, path
 
-from google.cloud import bigquery
+from google.cloud import bigquery, storage
 from colorama import Style, Fore
 from pathlib import Path
 
@@ -83,7 +83,7 @@ class SalesNinja():
             ), on="GeographyKey", how="left")
 
         self.save_as_csv(data,
-                         path.join(LOCAL_DATA_PATH, "ml_merged", f"ratio{ratio}", "data_ml_merged.csv"))
+                         path.join(LOCAL_DATA_PATH, "merged", f"data_ml_merged_{ratio*100}.csv"))
 
         return data
 
@@ -146,7 +146,7 @@ class SalesNinja():
             on="GeographyKey", how="left")
 
         self.save_as_csv(data,
-                         path.join(LOCAL_DATA_PATH, "db_merged", f"ratio{ratio}", "data_db_merged.csv"))
+                         path.join(LOCAL_DATA_PATH, "merged", "data_db_merged_{ratio*100}.csv"))
 
         return data
 
@@ -155,13 +155,13 @@ class SalesNinja():
         """
         Fetch merged data for machine learning use
         """
-        local_data_directory = path.join(LOCAL_DATA_PATH, "ml_merged", f"ratio{ratio}")
+        local_data_directory = path.join(LOCAL_DATA_PATH, "merged")
 
-        if path.join(local_data_directory, "data_ml_merged.csv").is_file():
+        if Path(path.join(local_data_directory, f"data_ml_merged_{ratio*100}.csv")).is_file():
             print("[SalesNinja] Loading local merged ML data ...")
-            data = pd.read_csv(path.join(local_data_directory, "data_ml_merged.csv"))
+            data = pd.read_csv(path.join(local_data_directory, f"data_ml_merged_{ratio*100}.csv"))
         else:
-            print("[SalesNinja] No local merged ML data found, merging raw files ...")
+            print(f"[SalesNinja] No local merged ML data with ratio {ratio} found, merging raw files ...")
             data = self.make_ml_data(ratio = ratio)
 
         data = data[(data['DateKey'] > min_date) & (data['DateKey'] < max_date)]
@@ -173,13 +173,13 @@ class SalesNinja():
         """
         Fetch merged data for dashboard use
         """
-        local_data_directory = path.join(LOCAL_DATA_PATH, "db_merged", f"ratio{ratio}")
+        local_data_directory = path.join(LOCAL_DATA_PATH, "merged")
 
-        if path.join(local_data_directory, "data_db_merged.csv").is_file():
+        if Path(path.join(local_data_directory, f"data_db_merged_{ratio*100}.csv")).is_file():
             print("[SalesNinja] Loading local merged dashboard data ...")
-            data = pd.read_csv(path.join(local_data_directory, "data_db_merged.csv"))
+            data = pd.read_csv(path.join(local_data_directory, f"data_db_merged_{ratio*100}.csv"))
         else:
-            print("[SalesNinja] No local merged dashboard data found, merging raw files ...")
+            print(f"[SalesNinja] No local merged dashboard data with ratio {ratio} found, merging raw files ...")
             data = self.make_db_data(ratio = ratio)
 
         data = data[(data['DateKey'] > min_date) & (data['DateKey'] < max_date)]
@@ -191,9 +191,12 @@ class SalesNinja():
         """
         Save dataframe as CSV
         """
-        local_filename = path.join(LOCAL_DATA_PATH, filename)
-        mergeddata.to_csv(local_filename)
-        print(f"- Data saved to '{local_filename}'")
+        #local_filename = Path(path.join(LOCAL_DATA_PATH, filename))
+        if not path.exists(path.dirname(filename)):
+            os.mkdir(path.dirname(filename))
+
+        mergeddata.to_csv(filename)
+        print(f"- Data saved to '{filename}'")
 
 
     def get_custom_data(self, *args):
@@ -265,3 +268,6 @@ class SalesNinja():
         result = job.result()  # wait for the job to complete
 
         print(f"[ML] Data saved to bigquery, with shape {data.shape}")
+
+if __name__ == "__main__":
+    SalesNinja().get_ml_data(ratio = 0.1)

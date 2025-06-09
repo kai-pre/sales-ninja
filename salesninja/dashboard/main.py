@@ -11,10 +11,12 @@ from salesninja.ml import models, preprocessing, registry
 
 from salesninja.params import *
 
+from google.cloud import storage
+
 ### Main interface for SalesNinja dashboard
 def preprocess(min_date:str = "2007-01-01", max_date:str = "2009-12-31"):
     """
-    - Query Contoso dataset from our raw BigQuery dataset
+    - Query Contoso dataset from our BigQuery dataset
     - If not existing locally, cache as csv files
     - Preprocess query data
     - Store processed data on our BigQuery cloud if it doesn't exist yet (truncate existing tables if older than $N_TIMESTEPS or number of tables higher than $N_TABLES)
