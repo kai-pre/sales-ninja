@@ -1,9 +1,11 @@
 ### Imports
 import pandas as pd
 import numpy as np
+import glob
 from os import getcwd, path
 
 
+from salesninja.params import *
 
 ### Class definition
 
@@ -11,26 +13,26 @@ class SalesNinja():
     def __init__(self):
         pass
 
-    def get_ml_data(self, ratio = 0.2):
+    def make_ml_data(self, ratio = 0.2):
         """
-        Fetch raw data and merge it for machine learning use
+        Fetch raw data and merge it for ML use
         """
+        local_rawdata_directory = path.join(LOCAL_DATA_PATH, "raw")
+
         # Load less data for now to try and avoid crashes
         skipratio = (1-ratio) # elements to skip
+        skipsize = int(NUMBER_OF_ROWS * skipratio)
+        skipindices = np.random.choice(np.arange(1,NUMBER_OF_ROWS), (skipsize), replace = False)
 
-        skipsize = int(3406088 * skipratio)
-        skipindices = np.random.choice(np.arange(1,3406088), (skipsize), replace = False)
-        skipindices
-
-        data = pd.read_csv(path.join(path.dirname(path.dirname(__file__)), "raw_data", "FactSales.csv"),
+        data = pd.read_csv(path.join(local_rawdata_directory, "FactSales.csv"),
                            header = 0, skiprows = skipindices).drop(['CurrencyKey'], axis=1)
         #data.set_index(['SalesKey'], inplace=True)
 
         data = data.merge(pd.read_csv(
-            path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimPromotion.csv"),
+            path.join(local_rawdata_directory, "DimPromotion.csv"),
             usecols=["DiscountPercent", "PromotionKey"],
             ), on="PromotionKey", how="left",).merge(pd.read_csv(
-                path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimDate.csv"),
+                path.join(local_rawdata_directory, "DimDate.csv"),
                 usecols=[
                     "DateKey",
                     "IsWorkDay",
@@ -40,7 +42,7 @@ class SalesNinja():
                     "CalendarQuarterLabel",
                     "CalendarDayOfWeekNumber"],
             ), on="DateKey", how="left").merge(pd.read_csv(
-                path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimProduct.csv"),
+                path.join(local_rawdata_directory, "DimProduct.csv"),
                 usecols=[
                     "ProductKey",
                     "ProductSubcategoryKey",
@@ -52,20 +54,21 @@ class SalesNinja():
                     "WeightUnitMeasureID",
                     "StockTypeID"],
             ), on="ProductKey", how="left").merge(pd.read_csv(
-                path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimProductSubcategory.csv"),
+                path.join(local_rawdata_directory, "DimProductSubcategory.csv"),
                 usecols=["ProductSubcategoryKey", "ProductCategoryKey"],
             ), on="ProductSubcategoryKey", how="left").merge(pd.read_csv(
-                path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimProductCategory.csv"),
+                path.join(local_rawdata_directory, "DimProductCategory.csv"),
                 usecols=["ProductCategoryKey"],
             ), on="ProductCategoryKey", how="left").merge(pd.read_csv(
-                path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimStore.csv"),
+                path.join(local_rawdata_directory, "DimStore.csv"),
                 usecols=[
                     "StoreKey",
                     "GeographyKey",
                     "StoreType",
                     "EmployeeCount",
                     "SellingAreaSize"],
-            ), on="StoreKey", how="left").merge(pd.read_csv(path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimGeography.csv"),
+            ), on="StoreKey", how="left").merge(pd.read_csv(
+                path.join(local_rawdata_directory, "DimGeography.csv"),
                 usecols=[
                     "GeographyKey",
                     "GeographyType",
@@ -76,31 +79,37 @@ class SalesNinja():
                 ],
             ), on="GeographyKey", how="left")
 
+        self.save_as_csv(data,
+                         path.join(LOCAL_DATA_PATH, "ml_merged", f"ratio{ratio}", "data_ml_merged.csv"))
+
         return data
 
-    def get_dashboard_data(self, ratio = 0.2):
+
+    def make_db_data(self, ratio = 0.2):
         """
         Fetch raw data and merge it for dashboard use
         """
+        local_rawdata_directory = path.join(LOCAL_DATA_PATH, "raw")
+
         # Load less data for now to try and avoid crashes
         skipratio = (1-ratio) # elements to skip
 
-        skipsize = int(3406088 * skipratio)
-        skipindices = np.random.choice(np.arange(1,3406088), (skipsize), replace = False)
+        skipsize = int(NUMBER_OF_ROWS * skipratio)
+        skipindices = np.random.choice(np.arange(1,NUMBER_OF_ROWS), (skipsize), replace = False)
         skipindices
 
-        data = pd.read_csv(path.join(path.dirname(path.dirname(__file__)), "raw_data", "FactSales.csv"),
+        data = pd.read_csv(path.join(local_rawdata_directory, "FactSales.csv"),
                            header = 0, skiprows = skipindices).drop(['CurrencyKey'], axis=1)
         #data.set_index(['SalesKey'], inplace=True)
 
         data = data.merge(pd.read_csv(
-            path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimChannel.csv"), usecols=["ChannelKey", "ChannelName"]),
-            left_on="channelKey",right_on="ChannelKey",how="left").rename(
+            path.join(path.join(local_rawdata_directory, "DimChannel.csv"),
+            usecols=["ChannelKey", "ChannelName"]),
+            left_on="channelKey",right_on="ChannelKey",how="left")).rename(
                 columns={"channelKey": "ChannelKey"}).merge(pd.read_csv(
-                    path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimPromotion.csv"),
+                path.join(path.join(local_rawdata_directory, "DimPromotion.csv"),
                 usecols=["PromotionKey", "PromotionName", "PromotionType"]),
-            on="PromotionKey", how="left").merge(pd.read_csv(
-                path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimDate.csv"),
+            on="PromotionKey", how="left").merge(path.join(local_rawdata_directory, "DimDate.csv"),
                 usecols=[
                     "DateKey",
                     "CalendarYear",
@@ -110,19 +119,22 @@ class SalesNinja():
                     "CalendarDayOfWeekNumber",
                     "CalendarDayOfWeekLabel"]),
             on="DateKey", how="left").merge(pd.read_csv(
-            path.join(getcwd(), "raw_data", "DimProduct.csv"),
+            path.join(local_rawdata_directory, "DimProduct.csv"),
             usecols=["ProductKey", "ProductName", "ProductSubcategoryKey"]),
             on="ProductKey", how="left").merge(pd.read_csv(
-            path.join(getcwd(), "raw_data", "DimProductSubcategory.csv"),
+            path.join(local_rawdata_directory, "DimProductSubcategory.csv"),
             usecols=[
                 "ProductSubcategoryKey",
                 "ProductSubcategoryName",
                 "ProductCategoryKey"]),
-            on="ProductSubcategoryKey", how = "left").merge(pd.read_csv(path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimProductCategory.csv"),
+            on="ProductSubcategoryKey", how = "left").merge(pd.read_csv(
+                path.join(local_rawdata_directory, "DimProductCategory.csv"),
                 usecols=["ProductCategoryKey", "ProductCategoryName"]),
-            on="ProductCategoryKey", how="left").merge(pd.read_csv(path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimStore.csv"),
+            on="ProductCategoryKey", how="left").merge(pd.read_csv(
+                path.join(local_rawdata_directory, "DimStore.csv"),
                 usecols=["StoreKey", "GeographyKey", "StoreType", "StoreName"]),
-            on="StoreKey", how="left").merge(pd.read_csv(path.join(path.dirname(path.dirname(__file__)), "raw_data", "DimGeography.csv"),
+            on="StoreKey", how="left").merge(pd.read_csv(
+                path.join(local_rawdata_directory, "DimGeography.csv"),
                 usecols=["GeographyType",
                     "ContinentName",
                     "CityName",
@@ -130,23 +142,52 @@ class SalesNinja():
                     "RegionCountryName",]),
             on="GeographyKey", how="left")
 
+        self.save_as_csv(data,
+                         path.join(LOCAL_DATA_PATH, "db_merged", f"ratio{ratio}", "data_db_merged.csv"))
+
         return data
 
-    def make_ml_csv(self, filename = "data_ml_merged.csv"):
-        """
-        Fetch raw data and create merged csv file for machine learning
-        """
-        filepath = path.join(getcwd(), "merged_data", filename)
-        self.get_ml_data().to_csv(filepath)
-        print(f"Data saved to '{filename}'")
 
-    def make_dashboard_csv(self, filename = "data_dashboard_merged.csv"):
+    def get_ml_data(self, ratio = 0.2):
         """
-        Fetch raw data and create merged csv file for dashboard
+        Fetch merged data for machine learning use
         """
-        filepath = path.join(getcwd(), "merged_data", filename)
-        self.get_dashboard_data().to_csv(filepath)
-        print(f"Data saved to '{filename}'")
+        local_data_directory = path.join(LOCAL_DATA_PATH, "ml_merged", f"ratio{ratio}")
+
+        try:
+            data = pd.read_csv(path.join(local_data_directory, "data_ml_merged.csv"))
+            print("[SalesNinja] Successfully loaded local merged ML data")
+        except:
+            print("[SalesNinja] No local merged ML data found, merging raw files...")
+            data = self.make_ml_data(ratio = ratio)
+
+        return data
+
+
+    def get_db_data(self, ratio = 0.2):
+        """
+        Fetch merged data for dashboard use
+        """
+        local_data_directory = path.join(LOCAL_DATA_PATH, "db_merged", f"ratio{ratio}")
+
+        try:
+            data = pd.read_csv(path.join(local_data_directory, "data_db_merged.csv"))
+            print("[SalesNinja] Successfully loaded local merged dashboard data")
+        except:
+            print("[SalesNinja] No local merged dashboard data found, merging raw files...")
+            data = self.make_db_data(ratio = ratio)
+
+        return data
+
+
+    def save_as_csv(self, mergeddata, filename = "unknown/data_merged.csv"):
+        """
+        Save dataframe as CSV
+        """
+        local_filename = path.join(LOCAL_DATA_PATH, filename)
+        mergeddata.to_csv(local_filename)
+        print(f"- Data saved to '{local_filename}'")
+
 
     def get_custom_data(self, *args):
         """

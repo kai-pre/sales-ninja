@@ -3,6 +3,7 @@ import numpy as np
 
 ##################  VARIABLES  ##################
 DATA_SIZE = 0.2
+NUMBER_OF_ROWS = 3406088
 LOCAL_DATA_PATH = os.path.join(os.path.expanduser('~'), ".salesninja", "data")
 LOCAL_REGISTRY_PATH =  os.path.join(os.path.expanduser('~'), ".salesninja", "training_outputs")
 MODEL_TARGET = "local" #local, gcp, mlflow(?)
