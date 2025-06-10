@@ -9,10 +9,11 @@ from tensorflow import keras
 from google.cloud import storage
 
 from salesninja.params import *
+from salesninja.ml.models import load_XGB_model
 
 
 
-def save_Results(params: dict, metrics: dict):
+def save_results(params: dict, metrics: dict):
     """
     Persist params & metrics locally on the hard drive at
     "{LOCAL_REGISTRY_PATH}/params/{current_timestamp}.pickle"
@@ -24,12 +25,18 @@ def save_Results(params: dict, metrics: dict):
     # Save params locally
     if params is not None:
         params_path = os.path.join(LOCAL_REGISTRY_PATH, "params", timestamp + ".pickle")
+        if not os.path.exists(os.path.dirname(params_path)):
+            print(f"- Path does not exist, will create {os.path.dirname(params_path)}")
+            os.makedirs(os.path.dirname(params_path))
         with open(params_path, "wb") as file:
             pickle.dump(params, file)
 
     # Save metrics locally
     if metrics is not None:
         metrics_path = os.path.join(LOCAL_REGISTRY_PATH, "metrics", timestamp + ".pickle")
+        if not os.path.exists(os.path.dirname(metrics_path)):
+            print(f"- Path does not exist, will create {os.path.dirname(metrics_path)}")
+            os.makedirs(os.path.dirname(metrics_path))
         with open(metrics_path, "wb") as file:
             pickle.dump(metrics, file)
 
@@ -38,21 +45,24 @@ def save_Results(params: dict, metrics: dict):
 
 def save_model(model = None):
     """
-    Persist trained model locally on the hard drive at f"{LOCAL_REGISTRY_PATH}/models/{timestamp}.h5"
-    - if MODEL_TARGET='gcs', also persist it in your bucket on GCS at "models/{timestamp}.h5"
+    Persist trained model locally on the hard drive at f"{LOCAL_REGISTRY_PATH}/models/{timestamp}.json"
+    - if MODEL_TARGET='gcs', also persist it in your bucket on GCS at "models/{timestamp}.json"
     """
 
     timestamp = time.strftime("%Y%m%d-%H%M%S")
 
     # Save model locally
-    model_path = os.path.join(LOCAL_REGISTRY_PATH, "models", f"{timestamp}.h5")
-    model.save(model_path)
+    model_path = os.path.join(LOCAL_REGISTRY_PATH, "models", f"{timestamp}.json")
+    if not os.path.exists(os.path.dirname(model_path)):
+        print(f"- Path does not exist, will create {os.path.dirname(model_path)}")
+        os.makedirs(os.path.dirname(model_path))
+    model.save_model(model_path)
 
     print("[Registry] Model saved locally")
 
     if MODEL_TARGET == "gcs":
 
-        model_filename = model_path.split("/")[-1] # e.g. "20230208-161047.h5" for instance
+        model_filename = model_path.split("/")[-1] # e.g. "20230208-161047.json" for instance
         client = storage.Client()
         bucket = client.bucket(BUCKET_NAME)
         blob = bucket.blob(f"models/{model_filename}")
@@ -83,14 +93,16 @@ def load_model(stage = "Production"):
         local_model_paths = glob.glob(f"{local_model_directory}/*")
 
         if not local_model_paths:
+            print(Fore.BLUE + f"- No model found in local registry, initializing new one ..." + Style.RESET_ALL)
             return None
 
         most_recent_model_path_on_disk = sorted(local_model_paths)[-1]
 
-        print(Fore.BLUE + f"\n- Load latest model from disk..." + Style.RESET_ALL)
+        print(Fore.BLUE + f"- Load latest model from disk..." + Style.RESET_ALL)
 
         ### Not sure if this is gonna work, since XGBoost model might not be a Keras model
-        latest_model = keras.models.load_model(most_recent_model_path_on_disk)
+        # latest_model = keras.models.load_model(most_recent_model_path_on_disk)
+        latest_model = load_XGB_model(most_recent_model_path_on_disk)
 
         print("[Registry] Model loaded from local disk")
 
