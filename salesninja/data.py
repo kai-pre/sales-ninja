@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 import glob
+import os
 from os import getcwd, path
 
 from google.cloud import bigquery, storage
@@ -16,7 +17,7 @@ class SalesNinja():
     def __init__(self):
         pass
 
-    def make_ml_data(self, ratio = 0.2):
+    def make_ml_data(self, ratio = DATA_SIZE):
         """
         Fetch raw data and merge it for ML use
         """
@@ -83,12 +84,12 @@ class SalesNinja():
             ), on="GeographyKey", how="left")
 
         self.save_as_csv(data,
-                         path.join(LOCAL_DATA_PATH, "merged", f"data_ml_merged_{ratio*100}.csv"))
+                         path.join(LOCAL_DATA_PATH, "merged", f"data_ml_merged_{int(ratio*100)}.csv"))
 
         return data
 
 
-    def make_db_data(self, ratio = 0.2):
+    def make_db_data(self, ratio = DATA_SIZE):
         """
         Fetch raw data and merge it for dashboard use
         """
@@ -146,20 +147,20 @@ class SalesNinja():
             on="GeographyKey", how="left")
 
         self.save_as_csv(data,
-                         path.join(LOCAL_DATA_PATH, "merged", "data_db_merged_{ratio*100}.csv"))
+                         path.join(LOCAL_DATA_PATH, "merged", "data_db_merged_{int(ratio*100)}.csv"))
 
         return data
 
 
-    def get_ml_data(self, ratio = 0.2, min_date = "2007-01-01", max_date = "2009-12-31"):
+    def get_ml_data(self, ratio = DATA_SIZE, min_date = "2007-01-01", max_date = "2009-12-31"):
         """
         Fetch merged data for machine learning use
         """
         local_data_directory = path.join(LOCAL_DATA_PATH, "merged")
 
-        if Path(path.join(local_data_directory, f"data_ml_merged_{ratio*100}.csv")).is_file():
+        if Path(path.join(local_data_directory, f"data_ml_merged_{int(ratio*100)}.csv")).is_file():
             print("[SalesNinja] Loading local merged ML data ...")
-            data = pd.read_csv(path.join(local_data_directory, f"data_ml_merged_{ratio*100}.csv"))
+            data = pd.read_csv(path.join(local_data_directory, f"data_ml_merged_{int(ratio*100)}.csv"))
         else:
             print(f"[SalesNinja] No local merged ML data with ratio {ratio} found, merging raw files ...")
             data = self.make_ml_data(ratio = ratio)
@@ -169,15 +170,15 @@ class SalesNinja():
         return data
 
 
-    def get_db_data(self, ratio = 0.2, min_date = "2007-01-01", max_date = "2009-12-31"):
+    def get_db_data(self, ratio = DATA_SIZE, min_date = "2007-01-01", max_date = "2009-12-31"):
         """
         Fetch merged data for dashboard use
         """
         local_data_directory = path.join(LOCAL_DATA_PATH, "merged")
 
-        if Path(path.join(local_data_directory, f"data_db_merged_{ratio*100}.csv")).is_file():
+        if Path(path.join(local_data_directory, f"data_db_merged_{int(ratio*100)}.csv")).is_file():
             print("[SalesNinja] Loading local merged dashboard data ...")
-            data = pd.read_csv(path.join(local_data_directory, f"data_db_merged_{ratio*100}.csv"))
+            data = pd.read_csv(path.join(local_data_directory, f"data_db_merged_{int(ratio*100)}.csv"))
         else:
             print(f"[SalesNinja] No local merged dashboard data with ratio {ratio} found, merging raw files ...")
             data = self.make_db_data(ratio = ratio)
@@ -193,9 +194,12 @@ class SalesNinja():
         """
         #local_filename = Path(path.join(LOCAL_DATA_PATH, filename))
         if not path.exists(path.dirname(filename)):
-            os.mkdir(path.dirname(filename))
+            print(f"- Path does not exist, will create {path.dirname(filename)}")
+            os.makedirs(path.dirname(filename))
+        else:
+            print(f"- Path {path.dirname(filename)} exists, will do nothing ...")
 
-        mergeddata.to_csv(filename)
+        mergeddata.to_csv(filename, header=0, index=False)
         print(f"- Data saved to '{filename}'")
 
 
@@ -207,6 +211,7 @@ class SalesNinja():
 
 
     def get_data_with_cache(
+            self,
             query:str,
             cache_path:Path,
             data_has_header=True
@@ -219,6 +224,7 @@ class SalesNinja():
         if cache_path.is_file():
             print(Fore.BLUE + "\n[ML] Load data from local CSV..." + Style.RESET_ALL)
             df = pd.read_csv(cache_path, header='infer' if data_has_header else None)
+            #df = pd.read_csv(cache_path, header = 0)
         else:
             print(Fore.BLUE + "\n[ML] Load data from BigQuery server..." + Style.RESET_ALL)
             client = bigquery.Client(project=GCP_SALESNINJA)
@@ -228,6 +234,8 @@ class SalesNinja():
 
             # Store as CSV if the BQ query returned at least one valid line
             if df.shape[0] > 1:
+                if not path.exists(path.dirname(cache_path)):
+                    os.makedirs(path.dirname(cache_path))
                 df.to_csv(cache_path, header=data_has_header, index=False)
 
         print(f"[ML] Data loaded, with shape {df.shape}")
@@ -236,6 +244,7 @@ class SalesNinja():
 
 
     def load_data_to_bq(
+            self,
             data: pd.DataFrame,
             table: str,
             truncate: bool
@@ -253,7 +262,7 @@ class SalesNinja():
 
         # TODO: simplify this solution if possible, but students may very well choose another way to do it
         # We don't test directly against their own BQ tables, but only the result of their query
-        data.columns = [f"_{column}" if not str(column)[0].isalpha() and not str(column)[0] == "_" else str(column) for column in data.columns]
+        # data.columns = [f"_{column}" if not str(column)[0].isalpha() and not str(column)[0] == "_" else str(column) for column in data.columns]
 
         client = bigquery.Client()
 
@@ -261,7 +270,7 @@ class SalesNinja():
         write_mode = "WRITE_TRUNCATE" if truncate else "WRITE_APPEND"
         job_config = bigquery.LoadJobConfig(write_disposition=write_mode)
 
-        print(f"\n{'Writing' if truncate else 'Appending'} {full_table_name} ({data.shape[0]} rows)")
+        print(f"\n[ML] {'Writing' if truncate else 'Appending'} {full_table_name} ({data.shape[0]} rows)")
 
         # Load data
         job = client.load_table_from_dataframe(data, full_table_name, job_config=job_config)

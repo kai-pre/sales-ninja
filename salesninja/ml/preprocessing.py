@@ -2,11 +2,31 @@
 import pandas as pd
 import numpy as np
 
-from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler, OneHotEncoder, LabelEncoder
 from sklearn.compose import ColumnTransformer, make_column_transformer, make_column_selector
 from sklearn.impute import SimpleImputer
 
 from colorama import Fore, Style
+
+
+def clean_data(df):
+    """
+    Removes outliers based on "SalesAmount"
+    """
+    ### Boolean mask to remove outliers based on SalesAmount
+    # Find the standard deviation of 'SalesAmount'
+    std_sales = df['SalesAmount'].std()
+
+    # Find 2.5 times the standard deviation
+    threshold = 2.5 * std_sales
+
+    # Create a boolean mask (True for values above threshold, False otherwise)
+    boolean_mask = (df['SalesAmount'] <= threshold)
+
+    # Apply the boolean filtering
+    df = df[boolean_mask]#.reset_index(drop=True) # Kai: not sure if index should be reset here...
+
+    return df
 
 
 
@@ -15,7 +35,7 @@ class SimplePreprocessor():
     Simple preprocessor to get started with ML quickly
     """
     def __init__(self):
-        self.preprocessor = preprocessor = make_column_transformer([RobustScaler(), make_column_selector(dtype_include = "number")], remainder="passthrough")
+        self.preprocessor = make_column_transformer([RobustScaler(), make_column_selector(dtype_include = "number")], remainder="passthrough")
 
     def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
         df_processed = self.preprocessor.fit_transform(df)
@@ -34,7 +54,12 @@ class SalesNinjaPreprocessor():
     def __init__(self):
         pass
 
-    def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
+    def fit_transform(self, df: pd.DataFrame, debug = False) -> pd.DataFrame:
+        if "Unnamed: 0" in df.columns:
+            if debug:
+                print("Column 'Unnamed: 0' found, dropped!")
+            df = df.drop("Unnamed: 0", axis = 1)
+
         # Instantiate a SimpleImputer object with your strategy of choice
         imputer = SimpleImputer(strategy="constant", fill_value=0)
         # Call the "fit" method on the object
@@ -54,7 +79,9 @@ class SalesNinjaPreprocessor():
         df['ProductCategoryKey'] = imputer.transform(df[['ProductCategoryKey']])
 
         # delete blank spaces in columns
-        df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+        df['DateKey'] = pd.to_datetime(df['DateKey'], format = '%Y-%m-%d').dt.date
+
+        df = df.apply(lambda x: x.str.strip() if (x.dtype == "object") and (x.name != "DateKey") else x)
 
         df['BrandName'] = df['BrandName'].fillna('N/A')
 
@@ -84,7 +111,7 @@ class SalesNinjaPreprocessor():
         df['Weight'] = df['Weight'] * df['WeightUnitMeasureID'].map(conversion_factors)
 
         # Rename the Weight column
-        df = df.rename(columns={'Weight': 'Weight(grams)'})
+        df = df.rename(columns={'Weight': 'Weight_grams'})
 
         # Delete the WeightUnitMeasureID column
         df = df.drop('WeightUnitMeasureID', axis=1)
@@ -93,10 +120,7 @@ class SalesNinjaPreprocessor():
         df['CalendarQuarterLabel'] = df['CalendarQuarterLabel'].str.extract(r'(\d)').astype(int)
 
         #5.
-        df = df.set_index('SalesKey')
-
-        #6.
-        df['DateKey'] = pd.to_datetime(df['DateKey'])
+        #df = df.set_index('SalesKey')
 
         #Cyclical engineering to ensure proximity of dec to jan
         months_in_year = 12
@@ -126,7 +150,7 @@ class SalesNinjaPreprocessor():
             'channelKey', 'StoreKey', 'ProductKey', 'PromotionKey','StockTypeID',
             'UnitCost', 'UnitPrice', 'TotalCost', 'ReturnQuantity', 'ReturnAmount',
             'DiscountQuantity', 'DiscountAmount', 'DiscountPercent', 'CalendarYear',
-            'ProductSubcategoryKey', 'ClassID', 'StyleID', 'ColorID', 'Weight(grams)',
+            'ProductSubcategoryKey', 'ClassID', 'StyleID', 'ColorID', 'Weight_grams',
             'ProductCategoryKey', 'GeographyKey', 'EmployeeCount',
             'SellingAreaSize', 'sin_MonthNumber', 'cos_MonthNumber',
             'sin_CalendarDayOfWeekNumber', 'cos_CalendarDayOfWeekNumber',
@@ -139,26 +163,29 @@ class SalesNinjaPreprocessor():
         ohe = OneHotEncoder(sparse_output=False)
 
         cols_to_encode = [
-        'IsWorkDay','BrandName','StoreType','GeographyType','RegionCountryName'
+            'IsWorkDay','BrandName','StoreType','GeographyType','RegionCountryName'
         ]
         ohe.fit(df[cols_to_encode])
         df[ohe.get_feature_names_out()] = ohe.transform(df[cols_to_encode])
         df = df.drop(columns=cols_to_encode)
 
-        ### Boolean mask to remove outliers based on SalesAmount
-        # Find the standard deviation of 'SalesAmount'
-        std_sales = df['SalesAmount'].std()
+        labelencoder = LabelEncoder()
+        df["CityName"] = labelencoder.fit_transform(df["CityName"])
+        df["ContinentName"] = labelencoder.fit_transform(df["ContinentName"])
+        df["StateProvinceName"] = labelencoder.fit_transform(df["StateProvinceName"])
 
-        # Find 2.5 times the standard deviation
-        threshold = 2.5 * std_sales
+        # additional cleaning for BigQuery compatibility
+        df.columns = df.columns.str.replace(' ', '_')
+        df.columns = df.columns.str.replace('.', '')
+        df.columns = df.columns.str.replace('/', '')
 
-        # Create a boolean mask (True for values above threshold, False otherwise)
-        boolean_mask = (df['SalesAmount']<=threshold)
-
-        # Apply the boolean filtering
-        df = df[boolean_mask]#.reset_index(drop=True) # Kai: not sure if index should be reset here...
+        if "int64_field_0" in df.columns:
+            if debug:
+                print("Column 'int64_field_0' found, dropped!")
+            df = df.drop('int64_field_0', axis = 1)
 
         return df
+
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         return self.fit_transform(df)
@@ -166,7 +193,7 @@ class SalesNinjaPreprocessor():
 
 
 def preprocess_features(X: pd.DataFrame, simple:bool = True) -> np.ndarray:
-    print(Fore.BLUE + "\n🌖 Preprocessing features..." + Style.RESET_ALL)
+    print(Fore.BLUE + "\n[preprocessing] Preprocessing features..." + Style.RESET_ALL)
 
     preprocessor = SimplePreprocessor() if simple else SalesNinjaPreprocessor()
     X_processed = preprocessor.fit_transform(X)
@@ -174,9 +201,35 @@ def preprocess_features(X: pd.DataFrame, simple:bool = True) -> np.ndarray:
     if simple:
         X_processed = pd.DataFrame(X_processed)
         X_processed.columns = X.columns
-    print("\n🌗 X processed, with shape ", X_processed.shape)
+    print("\n[preprocessing] X processed, with shape ", X_processed.shape)
 
     return X_processed
+
+
+
+def seasonalize(data: pd.DataFrame, season = "daily") -> pd.DataFrame:
+    """
+    Aggregates data by season. "season" can be "daily", "weekly", "monthly",
+    "quarterly", or "yearly"
+    """
+    aggfeatures = {"UnitCost": "mean", "UnitPrice": "mean", "ReturnQuantity": "sum", "ReturnAmount": "sum",
+               "DiscountQuantity": "sum", "DiscountAmount": "sum", "DiscountPercent": "mean", "IsWorkDay": "mean",
+               "IsHoliday": "mean", "Weight": "sum", "EmployeeCount": "mean", "SellingAreaSize": "mean",
+               "TotalCost": "sum", "SalesQuantity": "sum", "SalesAmount": "sum"}
+
+    match season:
+        case "daily":
+            data_season = data.groupby("DateKey").agg(aggfeatures)
+        case "weekly":
+            data_season = data.groupby(["CalendarYear", "CalendarWeekLabel"]).agg(aggfeatures).reset_index()
+        case "monthly":
+            data_season = data.groupby(["CalendarYear", "MonthNumber"]).agg(aggfeatures).reset_index()
+        case "quarterly":
+            data_season = data.groupby(["CalendarYear", "CalendarQuarterLabel"]).agg(aggfeatures).reset_index()
+        case "yearly":
+            data_season = data_yearly = data.groupby("CalendarYear").agg(aggfeatures)
+
+    return data_season
 
 
 
@@ -186,13 +239,16 @@ def extract_prediction_facts(X: pd.DataFrame, with_datekey = True):
     from these limited features. This function extracts these features and returns
     them.
 
-    Facts are: DateKey, PromotionKey, DiscountPercent, CalendarYear, CalendarQuarterLabel,
-    CalendarWeekLabel, IsWorkDay, IsHoliday, MonthNumber, CalendarDayOfWeekNumber
+    Facts are: DateKey, CalendarYear, CalendarQuarterLabel, CalendarWeekLabel,
+    IsWorkDay, MonthNumber, CalendarDayOfWeekNumber
+
+    PromotionKey and DiscountPercent could be considered as well, but would necessitate
+    much more user input
     """
     if with_datekey:
-        return X[["DateKey", "PromotionKey", "DiscountPercent", "CalendarYear", "CalendarQuarterLabel",
+        return X[["DateKey", "CalendarYear", "CalendarQuarterLabel",
         "CalendarWeekLabel", "IsWorkDay", "MonthNumber", "CalendarDayOfWeekNumber"]]
-    return X[["PromotionKey", "DiscountPercent", "CalendarYear", "CalendarQuarterLabel",
+    return X[["CalendarYear", "CalendarQuarterLabel",
         "CalendarWeekLabel", "IsWorkDay", "MonthNumber", "CalendarDayOfWeekNumber"]]
 
 
