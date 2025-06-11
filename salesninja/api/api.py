@@ -81,6 +81,8 @@ def predict(
     newfacts = app.state.synth.create_facts(min_date, max_date)
     newdata = app.state.synth.sample_with_facts(newfacts)
 
+    # TO DO: preprocess this
+
     # use prediction model to predict a y for the synthesized data
     prediction = app.state.model.predict(newdata)
 

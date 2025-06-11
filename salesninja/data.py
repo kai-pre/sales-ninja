@@ -199,7 +199,7 @@ class SalesNinja():
         else:
             print(f"- Path {path.dirname(filename)} exists, will do nothing ...")
 
-        mergeddata.to_csv(filename, header=0, index=False)
+        mergeddata.to_csv(filename, header=True, index=False)
         print(f"- Data saved to '{filename}'")
 
 
@@ -280,3 +280,15 @@ class SalesNinja():
 
 if __name__ == "__main__":
     SalesNinja().get_ml_data(ratio = 0.1)
+
+
+# ML data is:
+"""
+SalesKey,DateKey,channelKey,StoreKey,ProductKey,PromotionKey,UnitCost,UnitPrice,
+SalesQuantity,ReturnQuantity,ReturnAmount,DiscountQuantity,DiscountAmount,TotalCost,
+SalesAmount,DiscountPercent,CalendarYear,CalendarQuarterLabel,CalendarWeekLabel,
+IsWorkDay,MonthNumber,CalendarDayOfWeekNumber,ProductSubcategoryKey,BrandName,
+ClassID,StyleID,ColorID,Weight,WeightUnitMeasureID,StockTypeID,ProductCategoryKey,
+GeographyKey,StoreType,EmployeeCount,SellingAreaSize,GeographyType,ContinentName,
+CityName,StateProvinceName,RegionCountryName
+"""
