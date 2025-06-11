@@ -2,11 +2,15 @@ import os
 import numpy as np
 
 ##################  VARIABLES  ##################
-DATA_SIZE = 0.2
-MODEL_TARGET = "local" #local, gcp, mlflow
-GCP_SALESNINJA = "le-wagon-data-bootcamp"
-GCP_REGION = "europe-west1"
-BQ_DATASET = "dashboard_data"
+DATA_SIZE = 0.1
+NUMBER_OF_ROWS = 3406088
+LOCAL_DATA_PATH = os.path.join(os.path.expanduser('~'), ".salesninja", "data")
+LOCAL_REGISTRY_PATH =  os.path.join(os.path.expanduser('~'), ".salesninja", "training_outputs")
+MODEL_TARGET = "gcs" #local, gcs
+#GCP_SALESNINJA = "le-wagon-data-bootcamp"
+GCP_SALESNINJA = "nodal-clock-456815-g3"
+GCP_REGION = "EU" # "europe-west1" or "EU" ?
+BQ_DATASET = "SalesNinja"
 BQ_REGION = "EU"
 BUCKET_NAME = "sales_ninja_bucket"
 #INSTANCE = "<<<Salesninja Name of Compute Engine / Virtual Machine GoogleCloud>>>"
@@ -34,7 +38,17 @@ PORT=8000
 ## API on Gcloud Run
 SERVICE_URL=""
 
-COLUMN_NAMES_DASHBOARD = []
+# disable tensorflow warnings
+TF_CPP_MIN_LOG_LEVEL=3
+
+COLUMN_NAMES_DASHBOARD = ["SalesKey","DateKey","ChannelKey","StoreKey","ProductKey","PromotionKey",
+                          "UnitCost","UnitPrice","SalesQuantity","ReturnQuantity","ReturnAmount",
+                          "DiscountQuantity","DiscountAmount","TotalCost","SalesAmount","ChannelKey",
+                          "ChannelName","PromotionName","PromotionType","CalendarYear","CalendarQuarterLabel",
+                          "CalendarMonthLabel","CalendarDayOfWeekLabel","MonthNumber",
+                          "CalendarDayOfWeekNumber","ProductName","ProductSubcategoryKey",
+                          "ProductSubcategoryName","ProductCategoryKey","ProductCategoryName",
+                          "GeographyKey","StoreType","StoreName","ContinentName"]
 
 #DTYPES_RAW = {
 #    "example": "float32",

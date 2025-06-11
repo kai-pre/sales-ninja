@@ -2,3 +2,4 @@ raw_data/
 merged_data/
 preprocessed_data/
 .code_graveyard.py
+gcs-key.json

@@ -24,6 +24,7 @@ pylint
 jupyter
 jupyterlab
 statsmodels
+xgboost
 mlflow==2.22.1
 prefect==2.19.2
 python-dotenv

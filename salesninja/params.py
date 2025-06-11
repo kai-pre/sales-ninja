@@ -9,7 +9,7 @@ LOCAL_REGISTRY_PATH =  os.path.join(os.path.expanduser('~'), ".salesninja", "tra
 MODEL_TARGET = "gcs" #local, gcs
 #GCP_SALESNINJA = "le-wagon-data-bootcamp"
 GCP_SALESNINJA = "nodal-clock-456815-g3"
-GCP_REGION = "EU" # "europe-west1" or "EU" ?
+GCP_REGION = "europe-west1" # "europe-west1" or "EU" ?
 BQ_DATASET = "SalesNinja"
 BQ_REGION = "EU"
 BUCKET_NAME = "sales_ninja_bucket"
@@ -31,12 +31,15 @@ PREFECT_LOG_LEVEL = "WARNING"
 #LOCAL_REGISTRY_PATH =  os.path.join(os.path.expanduser('~'), ".lewagon", "mlops", "training_outputs")
 
 # Docker port
-GAR_IMAGE="salesninja"
+GAR_IMAGE="salesninja_api"
 GAR_MEMORY="2Gi"
 PORT=8000
 
 ## API on Gcloud Run
 SERVICE_URL=""
+
+# disable tensorflow warnings
+TF_CPP_MIN_LOG_LEVEL=3
 
 COLUMN_NAMES_DASHBOARD = ["SalesKey","DateKey","ChannelKey","StoreKey","ProductKey","PromotionKey",
                           "UnitCost","UnitPrice","SalesQuantity","ReturnQuantity","ReturnAmount",

@@ -243,6 +243,42 @@ class SalesNinja():
         return df
 
 
+    def get_data_with_cache_and_filter(
+            self,
+            query:str,
+            cache_path:Path,
+            min_date:str,
+            max_date:str,
+            data_has_header=True
+        ) -> pd.DataFrame:
+        """
+        Retrieve `query` data from BigQuery, or from `cache_path` if the file exists
+        Store at `cache_path` if retrieved from BigQuery for future use
+        """
+
+        if cache_path.is_file():
+            print(Fore.BLUE + "\n[ML] Load data from local CSV..." + Style.RESET_ALL)
+            df = pd.read_csv(cache_path, header='infer' if data_has_header else None)
+            #df = pd.read_csv(cache_path, header = 0)
+        else:
+            print(Fore.BLUE + "\n[ML] Load data from BigQuery server..." + Style.RESET_ALL)
+            client = bigquery.Client(project=GCP_SALESNINJA)
+            query_job = client.query(query)
+            result = query_job.result()
+            df = result.to_dataframe()
+
+            # Store as CSV if the BQ query returned at least one valid line
+            if df.shape[0] > 1:
+                if not path.exists(path.dirname(cache_path)):
+                    os.makedirs(path.dirname(cache_path))
+                df.to_csv(cache_path, header=data_has_header, index=False)
+
+        df = df[(df['DateKey'] > min_date) & (df['DateKey'] < max_date)]
+        print(f"[ML] Data loaded, with shape {df.shape}")
+
+        return df
+
+
     def load_data_to_bq(
             self,
             data: pd.DataFrame,

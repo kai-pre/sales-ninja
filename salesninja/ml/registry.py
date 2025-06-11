@@ -5,7 +5,7 @@ import time
 import pickle
 
 from colorama import Fore, Style
-from tensorflow import keras
+#from tensorflow import keras
 from google.cloud import storage
 
 from salesninja.params import *
@@ -40,18 +40,21 @@ def save_results(params: dict, metrics: dict):
         with open(metrics_path, "wb") as file:
             pickle.dump(metrics, file)
 
-    print("[Registry:] Results saved locally")
+    print("[Registry] Results saved locally")
 
     if MODEL_TARGET == "gcs":
         ##### TO DO
         """
-        model_filename = model_path.split("/")[-1] # e.g. "20230208-161047.json" for instance
+        results_path =
+        results_filename = model_path.split("/")[-1] # e.g. "20230208-161047.json" for instance
         client = storage.Client()
         bucket = client.bucket(BUCKET_NAME)
         blob = bucket.blob(f"models/{model_filename}")
         blob.upload_from_filename(model_path)
-        """
+
         print("[Registry] Results saved to GCS")
+        """
+        pass
 
     return None
 
@@ -123,14 +126,28 @@ def load_model(stage = "Production"):
         print(Fore.BLUE + f"\n- Load latest model from GCS..." + Style.RESET_ALL)
 
         client = storage.Client()
-        blobs = list(client.get_bucket(BUCKET_NAME).list_blobs(prefix="model"))
+        #blobs = list(client.get_bucket(BUCKET_NAME).list_blobs(prefix="model"))
+        #blobs = list(client.get_bucket("/".join([BUCKET_NAME, "models"])).list_blobs())
+        #blobs = list(client.get_bucket(BUCKET_NAME))
+        bucket = client.bucket(BUCKET_NAME)
+        ### Specific file override
+        blob = bucket.blob("models/20250611-141823.json")
+        ###
+        print("------", blob, "-----")
 
         try:
-            latest_blob = max(blobs, key=lambda x: x.updated)
+            #latest_blob = max(blobs, key=lambda x: x.updated)
+            latest_blob = blob
             latest_model_path_to_save = os.path.join(LOCAL_REGISTRY_PATH, latest_blob.name)
+
+            if not os.path.exists(os.path.dirname(latest_model_path_to_save)):
+                os.makedirs(os.path.dirname(latest_model_path_to_save))
+
             latest_blob.download_to_filename(latest_model_path_to_save)
 
-            latest_model = keras.models.load_model(latest_model_path_to_save)
+            #latest_model = keras.models.load_model(latest_model_path_to_save)
+
+            latest_model = load_XGB_model(latest_model_path_to_save)
 
             print("[Registry] Latest model downloaded from cloud storage")
 
