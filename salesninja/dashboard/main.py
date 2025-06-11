@@ -237,6 +237,24 @@ def predict(X_pred: pd.DataFrame = None) -> np.ndarray:
 
 
 
+def train_synth(df: pd.DataFrame = None) -> None:
+    pass
+
+
+
+def synthesize(
+        min_date:str = '2007-01-01',
+        max_date:str = '2009-12-31',
+    ) -> float:
+    pass
+
+
+
+def predict_from_synthetic_data(X_synth: pd.DataFrame = None):
+    pass
+
+
+
 if __name__ == '__main__':
     preprocess(min_date='2009-01-01', max_date='2015-01-01')
     train(split_ratio = 0.1)

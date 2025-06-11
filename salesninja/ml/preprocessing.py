@@ -233,7 +233,7 @@ def seasonalize(data: pd.DataFrame, season = "daily") -> pd.DataFrame:
 
 
 
-def extract_prediction_facts(X: pd.DataFrame, with_datekey = True):
+def extract_prediction_facts(X: pd.DataFrame, with_datekey = False):
     """
     As a company has sparse information about the future, values are only predicted
     from these limited features. This function extracts these features and returns
@@ -243,12 +243,15 @@ def extract_prediction_facts(X: pd.DataFrame, with_datekey = True):
     IsWorkDay, MonthNumber, CalendarDayOfWeekNumber
 
     PromotionKey and DiscountPercent could be considered as well, but would necessitate
-    much more user input
+    much more user input.
+
+    CalendarYear is considered redundant, and would probably mess with data synthesis
+    if included.
     """
     if with_datekey:
-        return X[["DateKey", "CalendarYear", "CalendarQuarterLabel",
+        return X[["DateKey", "CalendarQuarterLabel",
         "CalendarWeekLabel", "IsWorkDay", "MonthNumber", "CalendarDayOfWeekNumber"]]
-    return X[["CalendarYear", "CalendarQuarterLabel",
+    return X[["CalendarQuarterLabel",
         "CalendarWeekLabel", "IsWorkDay", "MonthNumber", "CalendarDayOfWeekNumber"]]
 
 

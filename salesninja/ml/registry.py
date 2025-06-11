@@ -42,6 +42,19 @@ def save_results(params: dict, metrics: dict):
 
     print("[Registry:] Results saved locally")
 
+    if MODEL_TARGET == "gcs":
+        ##### TO DO
+        """
+        model_filename = model_path.split("/")[-1] # e.g. "20230208-161047.json" for instance
+        client = storage.Client()
+        bucket = client.bucket(BUCKET_NAME)
+        blob = bucket.blob(f"models/{model_filename}")
+        blob.upload_from_filename(model_path)
+        """
+        print("[Registry] Results saved to GCS")
+
+    return None
+
 
 def save_model(model = None):
     """
@@ -69,8 +82,6 @@ def save_model(model = None):
         blob.upload_from_filename(model_path)
 
         print("[Registry] Model saved to GCS")
-
-        return None
 
     return None
 
@@ -130,3 +141,15 @@ def load_model(stage = "Production"):
             return None
     else:
         return None
+
+def save_synth_model(model = None):
+    pass
+
+def load_synth_model(stage = "Production"):
+    pass
+
+def save_synth_metadata(metadata = None):
+    pass
+
+def load_synth_metadata(metadata = None):
+    pass
