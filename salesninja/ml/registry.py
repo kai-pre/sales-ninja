@@ -126,18 +126,17 @@ def load_model(stage = "Production"):
         print(Fore.BLUE + f"\n- Load latest model from GCS..." + Style.RESET_ALL)
 
         client = storage.Client()
-        #blobs = list(client.get_bucket(BUCKET_NAME).list_blobs(prefix="model"))
+        blobs = list(client.get_bucket(BUCKET_NAME).list_blobs(prefix="models/"))
         #blobs = list(client.get_bucket("/".join([BUCKET_NAME, "models"])).list_blobs())
-        #blobs = list(client.get_bucket(BUCKET_NAME))
         bucket = client.bucket(BUCKET_NAME)
         ### Specific file override
-        blob = bucket.blob("models/20250611-141823.json")
+        # blob = bucket.blob("models/20250611-141823.json")
+        #blob = bucket.blob("models/20250612-122100.json")
         ###
-        print("------", blob, "-----")
 
         try:
-            #latest_blob = max(blobs, key=lambda x: x.updated)
-            latest_blob = blob
+            latest_blob = max(blobs, key=lambda x: x.updated)
+            #latest_blob = blob
             latest_model_path_to_save = os.path.join(LOCAL_REGISTRY_PATH, latest_blob.name)
 
             if not os.path.exists(os.path.dirname(latest_model_path_to_save)):
@@ -149,7 +148,7 @@ def load_model(stage = "Production"):
 
             latest_model = load_XGB_model(latest_model_path_to_save)
 
-            print("[Registry] Latest model downloaded from cloud storage")
+            print(f"[Registry] Latest model ({latest_blob.name}) downloaded from cloud storage")
 
             return latest_model
         except:

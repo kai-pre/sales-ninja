@@ -51,9 +51,11 @@ def preprocess(min_date:str = "2007-01-01", max_date:str = "2009-12-31"):
 
     # Process data
     X = data_clean.drop("SalesAmount", axis=1)
-    y = data_clean[["SalesAmount"]]
+    #y = data_clean[["SalesAmount"]]
+    y = preprocessing.seasonalize_y(data_clean)
 
     X_processed = preprocessing.preprocess_features(X, simple = False)
+    X_processed = preprocessing.seasonalize_data(X_processed)
 
     # Load a DataFrame onto BigQuery containing [pickup_datetime, X_processed, y]
     # using data.load_data_to_bq()
@@ -78,7 +80,7 @@ def preprocess(min_date:str = "2007-01-01", max_date:str = "2009-12-31"):
 
 def train(
         split_ratio: float = 0.10,
-        forcenew = True
+        forcenew = False
     ):
     """
     - Download processed data from BQ table (or from cache if it exists)
@@ -227,6 +229,7 @@ def predict(X_pred: pd.DataFrame = None) -> np.ndarray:
     assert model is not None
 
     X_processed = preprocessing.preprocess_features(X_pred, simple = False)
+    X_processed = preprocessing.seasonalize_data(X_processed)
 
     X_processed = X_processed.drop("DateKey", axis = 1)
     y_pred = model.predict(X_processed)

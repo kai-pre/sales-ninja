@@ -2,6 +2,8 @@
 SALESNINJA_QUERIES=~/.salesninja/queried/
 SALESNINJA_PROCESSED=~/.salesninja/processed/
 SALESNINJA_ML=~/.salesninja/training_outputs/
+DATA_SIZE=0.1
+
 #################### PACKAGE ACTIONS ###################
 reinstall_package:
 	@pip uninstall -y salesninja || :

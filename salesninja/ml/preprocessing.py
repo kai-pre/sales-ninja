@@ -192,7 +192,151 @@ class SalesNinjaPreprocessor():
 
 
 
-def preprocess_features(X: pd.DataFrame, simple:bool = True) -> np.ndarray:
+def seasonalize_data(data: pd.DataFrame, season = "daily") -> pd.DataFrame:
+    """
+    Aggregates data by season. "season" can be "daily", "weekly", "monthly",
+    "quarterly", or "yearly"
+    """
+    print(Fore.BLUE + f"\n[preprocessing] Seasonalizing features, {season} ..." + Style.RESET_ALL)
+    # raw:
+    # SalesKey,DateKey,channelKey,StoreKey,ProductKey,PromotionKey,UnitCost,UnitPrice,
+    # SalesQuantity,ReturnQuantity,ReturnAmount,DiscountQuantity,DiscountAmount,TotalCost,
+    # SalesAmount,DiscountPercent,CalendarYear,CalendarQuarterLabel,CalendarWeekLabel,IsWorkDay,
+    # MonthNumber,CalendarDayOfWeekNumber,ProductSubcategoryKey,BrandName,ClassID,StyleID,ColorID,
+    # Weight,WeightUnitMeasureID,StockTypeID,ProductCategoryKey,GeographyKey,StoreType,EmployeeCount,
+    # SellingAreaSize,GeographyType,ContinentName,CityName,StateProvinceName,RegionCountryName
+
+    # after preprocessing:
+    # SalesKey,DateKey,channelKey,StoreKey,ProductKey,PromotionKey,UnitCost,UnitPrice,
+    # SalesQuantity,ReturnQuantity,ReturnAmount,DiscountQuantity,DiscountAmount,TotalCost,
+    # DiscountPercent,CalendarYear,ProductSubcategoryKey,ClassID,StyleID,ColorID,
+    # Weight_grams,StockTypeID,ProductCategoryKey,GeographyKey,EmployeeCount,SellingAreaSize,
+    # ContinentName,CityName,StateProvinceName,sin_MonthNumber,cos_MonthNumber,
+    # sin_CalendarDayOfWeekNumber,cos_CalendarDayOfWeekNumber,sin_CalendarQuarterLabel,
+    # cos_CalendarQuarterLabel,IsWorkDay_WeekEnd,IsWorkDay_WorkDay,BrandName_A_Datum,
+    # BrandName_Adventure_Works,BrandName_Contoso,BrandName_Fabrikam,BrandName_Litware,
+    # BrandName_NA,BrandName_Northwind_Traders,BrandName_Proseware,BrandName_Southridge_Video,
+    # BrandName_Tailspin_Toys,BrandName_The_Phone_Company,BrandName_Wide_World_Importers,
+    # StoreType_Catalog,StoreType_Online,StoreType_Reseller,StoreType_Store,GeographyType_City,
+    # RegionCountryName_Armenia,RegionCountryName_Australia,RegionCountryName_Bhutan,
+    # RegionCountryName_Canada,RegionCountryName_China,RegionCountryName_Denmark,
+    # RegionCountryName_France,RegionCountryName_Germany,RegionCountryName_Greece,
+    # RegionCountryName_India,RegionCountryName_Iran,RegionCountryName_Ireland,
+    # RegionCountryName_Italy,RegionCountryName_Japan,RegionCountryName_Kyrgyzstan,
+    # RegionCountryName_Malta,RegionCountryName_Pakistan,RegionCountryName_Poland,
+    # RegionCountryName_Portugal,RegionCountryName_Romania,RegionCountryName_Russia,
+    # RegionCountryName_Singapore,RegionCountryName_Slovenia,RegionCountryName_South_Korea,
+    # RegionCountryName_Spain,RegionCountryName_Sweden,RegionCountryName_Switzerland,
+    # RegionCountryName_Syria,RegionCountryName_Taiwan,RegionCountryName_Thailand,
+    # RegionCountryName_Turkmenistan,RegionCountryName_United_Kingdom,RegionCountryName_United_States,
+    # RegionCountryName_the_Netherlands,SalesAmount
+
+    # kept after seasonalizing:
+    # DateKey,UnitCost,UnitPrice,SalesQuantity,ReturnQuantity,ReturnAmount,
+    # DiscountQuantity,DiscountAmount,TotalCost,DiscountPercent,CalendarYear,
+    # Weight_grams,(sin_MonthNumber,cos_MonthNumber),(sin_CalendarDayOfWeekNumber,
+    # cos_CalendarDayOfWeekNumber),(sin_CalendarQuarterLabel,cos_CalendarQuarterLabel),
+    # IsWorkDay_WeekEnd,IsWorkDay_WorkDay,BrandName_A_Datum,BrandName_Adventure_Works,
+    # BrandName_Contoso,BrandName_Fabrikam,BrandName_Litware,BrandName_NA,
+    # BrandName_Northwind_Traders,BrandName_Proseware,BrandName_Southridge_Video,
+    # BrandName_Tailspin_Toys,BrandName_The_Phone_Company,BrandName_Wide_World_Importers,
+    # StoreType_Catalog,StoreType_Online,StoreType_Reseller,StoreType_Store,
+    # GeographyType_City,RegionCountryName_Armenia,RegionCountryName_Australia,
+    # RegionCountryName_Bhutan,RegionCountryName_Canada,RegionCountryName_China,
+    # RegionCountryName_Denmark,RegionCountryName_France,RegionCountryName_Germany,
+    # RegionCountryName_Greece,RegionCountryName_India,RegionCountryName_Iran,
+    # RegionCountryName_Ireland,RegionCountryName_Italy,RegionCountryName_Japan,
+    # RegionCountryName_Kyrgyzstan,RegionCountryName_Malta,RegionCountryName_Pakistan,
+    # RegionCountryName_Poland,RegionCountryName_Portugal,RegionCountryName_Romania,
+    # RegionCountryName_Russia,RegionCountryName_Singapore,RegionCountryName_Slovenia,
+    # RegionCountryName_South_Korea,RegionCountryName_Spain,RegionCountryName_Sweden,
+    # RegionCountryName_Switzerland,RegionCountryName_Syria,RegionCountryName_Taiwan,
+    # RegionCountryName_Thailand,RegionCountryName_Turkmenistan,RegionCountryName_United_Kingdom,
+    # RegionCountryName_United_States,RegionCountryName_the_Netherlands,SalesAmount
+
+    aggfeatures = {
+        "UnitCost": "sum", "UnitPrice": "sum", "ReturnQuantity": "sum",
+        "ReturnAmount": "sum", "DiscountQuantity": "sum", "DiscountAmount": "sum",
+        "DiscountPercent": "mean", "CalendarYear": "first", "Weight_grams": "sum",
+        "IsWorkDay_WeekEnd": "mean","IsWorkDay_WorkDay": "mean",
+        "BrandName_A_Datum": "mean", "BrandName_Adventure_Works": "mean",
+        "BrandName_Contoso": "mean", "BrandName_Fabrikam": "mean",
+        "BrandName_Litware": "mean", "BrandName_NA": "mean",
+        "BrandName_Northwind_Traders": "mean", "BrandName_Proseware": "mean",
+        "BrandName_Southridge_Video": "mean", "BrandName_Tailspin_Toys": "mean",
+        "BrandName_The_Phone_Company": "mean", "BrandName_Wide_World_Importers": "mean",
+        "StoreType_Catalog": "mean", "StoreType_Online": "mean", "StoreType_Reseller": "mean",
+        "StoreType_Store": "mean", "GeographyType_City": "mean",
+        "RegionCountryName_Armenia": "mean", "RegionCountryName_Australia": "mean",
+        "RegionCountryName_Bhutan": "mean", "RegionCountryName_Canada": "mean",
+        "RegionCountryName_China": "mean",
+        "RegionCountryName_Denmark": "mean", "RegionCountryName_France": "mean",
+        "RegionCountryName_Germany": "mean", "RegionCountryName_Greece": "mean",
+        "RegionCountryName_India": "mean", "RegionCountryName_Iran": "mean",
+        "RegionCountryName_Ireland": "mean", "RegionCountryName_Italy": "mean",
+        "RegionCountryName_Japan": "mean", "RegionCountryName_Kyrgyzstan": "mean",
+        "RegionCountryName_Malta": "mean", "RegionCountryName_Pakistan": "mean",
+        "RegionCountryName_Poland": "mean", "RegionCountryName_Portugal": "mean",
+        "RegionCountryName_Romania": "mean", "RegionCountryName_Russia": "mean",
+        "RegionCountryName_Singapore": "mean", "RegionCountryName_Slovenia": "mean",
+        "RegionCountryName_South_Korea": "mean", "RegionCountryName_Spain": "mean",
+        "RegionCountryName_Sweden": "mean", "RegionCountryName_Switzerland": "mean",
+        "RegionCountryName_Syria": "mean", "RegionCountryName_Taiwan": "mean",
+        "RegionCountryName_Thailand": "mean", "RegionCountryName_Turkmenistan": "mean",
+        "RegionCountryName_United_Kingdom": "mean", "RegionCountryName_United_States": "mean",
+        "RegionCountryName_the_Netherlands": "mean", "SalesQuantity": "sum"}
+
+    if "SalesAmount" in data.columns:
+        aggfeatures.update({"SalesAmount": "sum"})
+
+    match season:
+        case "daily":
+            aggfeatures.update({"sin_MonthNumber": "first","cos_MonthNumber": "first",
+                             "sin_CalendarDayOfWeekNumber": "first",
+                             "cos_CalendarDayOfWeekNumber": "first",
+                             "sin_CalendarQuarterLabel": "first",
+                             "cos_CalendarQuarterLabel": "first"})
+            data_season = data.groupby("DateKey").agg(aggfeatures)
+        case "weekly":
+            aggfeatures.update({"sin_MonthNumber": "first","cos_MonthNumber": "first",
+                             "sin_CalendarQuarterLabel": "first",
+                             "cos_CalendarQuarterLabel": "first"})
+            data_season = data.groupby(["CalendarYear", "CalendarWeekLabel"]).agg(aggfeatures).reset_index()
+        case "monthly":
+            aggfeatures.update({"sin_MonthNumber": "first","cos_MonthNumber": "first",
+                             "sin_CalendarQuarterLabel": "first",
+                             "cos_CalendarQuarterLabel": "first"})
+            data_season = data.groupby(["CalendarYear", "MonthNumber"]).agg(aggfeatures).reset_index()
+        case "quarterly":
+            aggfeatures.update({"sin_CalendarQuarterLabel": "first",
+                             "cos_CalendarQuarterLabel": "first"})
+            data_season = data.groupby(["CalendarYear", "CalendarQuarterLabel"]).agg(aggfeatures).reset_index()
+        case "yearly":
+            data_season = data.groupby("CalendarYear").agg(aggfeatures)
+
+    data_season.reset_index(inplace = True)
+    return data_season
+
+
+
+def seasonalize_y(data: pd.DataFrame, season = "daily") -> pd.Series:
+    match season:
+        case "daily":
+            data_season = data.groupby("DateKey").agg({"SalesAmount": "sum"})
+        case "weekly":
+            data_season = data.groupby(["CalendarYear", "CalendarWeekLabel"]).agg({"SalesAmount": "sum"})
+        case "monthly":
+            data_season = data.groupby(["CalendarYear", "MonthNumber"]).agg({"SalesAmount": "sum"})
+        case "quarterly":
+            data_season = data.groupby(["CalendarYear", "CalendarQuarterLabel"]).agg({"SalesAmount": "sum"})
+        case "yearly":
+            data_season = data.groupby("CalendarYear").agg({"SalesAmount": "sum"})
+
+    return data_season[["SalesAmount"]]
+
+
+
+def preprocess_features(X: pd.DataFrame, simple:bool = False) -> np.ndarray:
     print(Fore.BLUE + "\n[preprocessing] Preprocessing features..." + Style.RESET_ALL)
 
     preprocessor = SimplePreprocessor() if simple else SalesNinjaPreprocessor()
@@ -201,35 +345,11 @@ def preprocess_features(X: pd.DataFrame, simple:bool = True) -> np.ndarray:
     if simple:
         X_processed = pd.DataFrame(X_processed)
         X_processed.columns = X.columns
+        print("\n[preprocessing] X processed (simple), with shape ", X_processed.shape)
+        return X_processed
+
     print("\n[preprocessing] X processed, with shape ", X_processed.shape)
-
     return X_processed
-
-
-
-def seasonalize(data: pd.DataFrame, season = "daily") -> pd.DataFrame:
-    """
-    Aggregates data by season. "season" can be "daily", "weekly", "monthly",
-    "quarterly", or "yearly"
-    """
-    aggfeatures = {"UnitCost": "mean", "UnitPrice": "mean", "ReturnQuantity": "sum", "ReturnAmount": "sum",
-               "DiscountQuantity": "sum", "DiscountAmount": "sum", "DiscountPercent": "mean", "IsWorkDay": "mean",
-               "IsHoliday": "mean", "Weight": "sum", "EmployeeCount": "mean", "SellingAreaSize": "mean",
-               "TotalCost": "sum", "SalesQuantity": "sum", "SalesAmount": "sum"}
-
-    match season:
-        case "daily":
-            data_season = data.groupby("DateKey").agg(aggfeatures)
-        case "weekly":
-            data_season = data.groupby(["CalendarYear", "CalendarWeekLabel"]).agg(aggfeatures).reset_index()
-        case "monthly":
-            data_season = data.groupby(["CalendarYear", "MonthNumber"]).agg(aggfeatures).reset_index()
-        case "quarterly":
-            data_season = data.groupby(["CalendarYear", "CalendarQuarterLabel"]).agg(aggfeatures).reset_index()
-        case "yearly":
-            data_season = data_yearly = data.groupby("CalendarYear").agg(aggfeatures)
-
-    return data_season
 
 
 

@@ -46,8 +46,6 @@ class SalesNinjaSynthesis():
         if "CalendarYear" in dataframe.columns:
             dataframe = dataframe.drop('CalendarYear', axis = 1)
 
-        ##### TO DO: ensure int status of category columns
-
         self.metadata.update_columns(
             column_names = [
                 "channelKey", "StoreKey", "ProductKey", "PromotionKey",
@@ -178,6 +176,16 @@ class SalesNinjaSynthesis():
 
 
     def fit(self, data):
+        data[[
+            "ProductSubcategoryKey", "ClassID", "StyleID",
+            "ColorID", "Weight", "ProductCategoryKey",
+            "StockTypeID"
+            ]] = data[[
+            "ProductSubcategoryKey", "ClassID", "StyleID",
+            "ColorID", "Weight", "ProductCategoryKey",
+            "StockTypeID"
+            ]].astype(int)
+
         self.model.fit(data)
         """
         self.model.save(
@@ -256,7 +264,7 @@ class SalesNinjaSynthesis():
 if __name__ == '__main__':
     from salesninja.data import SalesNinja
     from salesninja.ml.registry import load_model
-    from salesninja.ml.preprocessing import preprocess_features
+    from salesninja.ml.preprocessing import preprocess_features, seasonalize_data
     from sklearn.metrics import mean_absolute_error, r2_score
 
     print("----- Getting test data -----")
@@ -292,6 +300,7 @@ if __name__ == '__main__':
     assert model is not None
 
     testsynthdata_processed = preprocess_features(testsynthdata, simple = False)
+    testsynthdata_processed = seasonalize_data(testsynthdata_processed)
 
     testsynthdata_processed = testsynthdata_processed.drop("DateKey", axis = 1)
     y_pred = model.predict(testsynthdata_processed)

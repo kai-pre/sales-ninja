@@ -85,6 +85,11 @@ class SalesNinja():
 
         self.save_as_csv(data,
                          path.join(LOCAL_DATA_PATH, "merged", f"data_ml_merged_{int(ratio*100)}.csv"))
+        self.load_data_to_bq(
+            data,
+            f"data_ml_merged_{int(ratio*100)}",
+            truncate = True
+        )
 
         return data
 
@@ -147,7 +152,12 @@ class SalesNinja():
             on="GeographyKey", how="left")
 
         self.save_as_csv(data,
-                         path.join(LOCAL_DATA_PATH, "merged", "data_db_merged_{int(ratio*100)}.csv"))
+                         path.join(LOCAL_DATA_PATH, "merged", f"data_db_merged_{int(ratio*100)}.csv"))
+        self.load_data_to_bq(
+            data,
+            f"data_db_merged_{int(ratio*100)}",
+            truncate = True
+        )
 
         return data
 
@@ -315,7 +325,7 @@ class SalesNinja():
         print(f"[ML] Data saved to bigquery, with shape {data.shape}")
 
 if __name__ == "__main__":
-    SalesNinja().get_ml_data(ratio = 0.1)
+    SalesNinja().get_ml_data(ratio = 0.2)
 
 
 # ML data is:
