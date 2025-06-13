@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 ##################  VARIABLES  ##################
-DATA_SIZE = 0.2
+DATA_SIZE = 0.1
 NUMBER_OF_ROWS = 3406088
 LOCAL_DATA_PATH = os.path.join(os.path.expanduser('~'), ".salesninja", "data")
 LOCAL_REGISTRY_PATH =  os.path.join(os.path.expanduser('~'), ".salesninja", "training_outputs")

@@ -175,7 +175,7 @@ class SalesNinja():
             print(f"[SalesNinja] No local merged ML data with ratio {ratio} found, merging raw files ...")
             data = self.make_ml_data(ratio = ratio)
 
-        data = data[(data['DateKey'] > min_date) & (data['DateKey'] < max_date)]
+        data = data[(data['DateKey'] >= min_date) & (data['DateKey'] <= max_date)]
 
         return data
 
@@ -193,7 +193,7 @@ class SalesNinja():
             print(f"[SalesNinja] No local merged dashboard data with ratio {ratio} found, merging raw files ...")
             data = self.make_db_data(ratio = ratio)
 
-        data = data[(data['DateKey'] > min_date) & (data['DateKey'] < max_date)]
+        data = data[(data['DateKey'] >= min_date) & (data['DateKey'] <= max_date)]
 
         return data
 
@@ -283,7 +283,7 @@ class SalesNinja():
                     os.makedirs(path.dirname(cache_path))
                 df.to_csv(cache_path, header=data_has_header, index=False)
 
-        df = df[(df['DateKey'] > min_date) & (df['DateKey'] < max_date)]
+        df = df[(df['DateKey'] >= min_date) & (df['DateKey'] <= max_date)]
         print(f"[ML] Data loaded, with shape {df.shape}")
 
         return df

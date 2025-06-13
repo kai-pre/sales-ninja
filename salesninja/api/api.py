@@ -80,12 +80,15 @@ def predict(
         max_date: str, # 2010-12-31
         keylist: Annotated[Union[list[str], None], Query()] = None,
         valuelist: Annotated[Union[list[str], None], Query()] = None,
+        grouplist: Annotated[Union[list[str], None], Query()] = None,
+        debugfactor = 1 / (DATA_SIZE)
     ):
     """
     Returns a dictionary sorted by the days of the queried date range as keys
     and the forecast SalesAmount as values. If given a key- and valuelist each,
     will filter the actual or synthetic data by these keys before prediction
-    (NOTE: currently not implemented).
+    (NOTE: currently not implemented). If given a grouplist, will group the
+    actual or synthetic data by these columns (NOTE: currently not implemented).
     """
 
     daterange = pd.date_range(pd.to_datetime(min_date), pd.to_datetime(max_date), freq='d').to_list()
@@ -96,6 +99,9 @@ def predict(
         FROM {GCP_SALESNINJA}.{BQ_DATASET}.data_ml_merged_{int(DATA_SIZE*100)}
         WHERE DateKey BETWEEN '{min_date}' AND '{max_date}'
         """
+        #{" ".join([f"AND {product} = {value}" for product, value in zip(keylist, valuelist)])}
+        #{"" if grouplist is None else f"GROUP BY {', '.join([group for group in grouplist])}"}
+
 
         data_query_cache_path = Path(LOCAL_DATA_PATH).joinpath("queried",
             f"query_{min_date}_{max_date}_{int(DATA_SIZE*100)}.csv")
@@ -105,6 +111,8 @@ def predict(
             cache_path=data_query_cache_path,
             data_has_header=True
         )
+        newdata_processed = preprocessing.preprocess_features(newdata, simple = False)
+        newdata_processed = preprocessing.seasonalize_data(newdata_processed)
 
     elif (date(min_date) < date("2010-01-01")):
         query = f"""
@@ -121,8 +129,11 @@ def predict(
             cache_path=data_query_cache_path,
             data_has_header=True
         )
+        newdata_actual_processed = preprocessing.preprocess_features(newdata_actual, simple = False)
+        newdata_actual_processed = preprocessing.seasonalize_data(newdata_actual_processed)
         newfacts = app.state.synth.create_facts("2010-01-01", max_date)
         newdata_synthetic = app.state.synth.sample_with_facts(newfacts)
+        newdata_synthetic = newdata_synthetic.drop("DateKey", axis = 1)
         newdata = pd.concat([newdata_actual, newdata_synthetic], axis = 0)
 
     else:
@@ -130,12 +141,8 @@ def predict(
         newdata = app.state.synth.sample_with_facts(newfacts)
 
     newdata = newdata.drop("SalesAmount", axis = 1)
-
-    newdata_processed = preprocessing.preprocess_features(newdata, simple = False)
-    newdata_processed = preprocessing.seasonalize_data(newdata_processed)
-
-    newdata_processed = newdata_processed.drop("DateKey", axis = 1)
-    prediction = app.state.model.predict(newdata_processed).tolist()
+    newdata = newdata.drop("DateKey", axis = 1)
+    prediction = (np.array(app.state.model.predict(newdata)) * debugfactor).tolist()
 
     results = dict(zip(daterange, prediction))
 
@@ -148,16 +155,25 @@ def predict(
 def predict_basic(
         min_date: str, # 2007-01-01
         max_date: str, # 2009-12-31
+        keylist: Annotated[Union[list[str], None], Query()] = None,
+        valuelist: Annotated[Union[list[str], None], Query()] = None,
+        grouplist: Annotated[Union[list[str], None], Query()] = None,
+        debugfactor = int(1 / (DATA_SIZE))
     ):
     """
     Returns a dictionary sorted by the days of the queried date range as keys
     and the forecast SalesAmount as values. Only works on existing data (2007-2009).
+    If given a key- and valuelist each, will filter the actual or synthetic data
+    by these keys before prediction. If given a grouplist, will group the
+    actual or synthetic data by these columns.
     """
 
     query = f"""
         SELECT *
         FROM {GCP_SALESNINJA}.{BQ_DATASET}.data_ml_merged_{int(DATA_SIZE*100)}
         WHERE DateKey BETWEEN '{min_date}' AND '{max_date}'
+        {" ".join([f"AND {product} = {value}" for product, value in zip(keylist, valuelist)])}
+        {"" if grouplist is None else f"GROUP BY {', '.join([group for group in grouplist])}"}
     """
     daterange = pd.date_range(pd.to_datetime(min_date, format = "%Y-%m-%d"),
                               pd.to_datetime(max_date, format = "%Y-%m-%d"),
@@ -178,7 +194,7 @@ def predict_basic(
     newdata_processed = preprocessing.seasonalize_data(newdata_processed)
 
     newdata_processed = newdata_processed.drop("DateKey", axis = 1)
-    prediction = app.state.model.predict(newdata_processed).tolist()
+    prediction = (np.array(app.state.model.predict(newdata_processed)) * debugfactor).tolist()
 
     results = dict(zip(daterange, prediction))
 

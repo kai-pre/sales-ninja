@@ -1,5 +1,6 @@
 raw_data/
 merged_data/
 preprocessed_data/
-.code_graveyard.py
+.code_graveyard.txt
+.docker_commands.txt
 gcs-key.json
