@@ -151,6 +151,8 @@ def predict(
 
 
 # http://127.0.0.1:8899/predict_basic?min_date=2009-01-01&max_date=2009-01-31
+# http://127.0.0.1:8899/predict_basic?min_date=2009-01-01&max_date=2009-01-31&keylist=[ChannelKey,PromotionKey]&valuelist=1,1
+# http://127.0.0.1:8899/predict_basic?min_date=2009-01-01&max_date=2009-01-31&grouplist=ProductKey
 @app.get("/predict_basic")
 def predict_basic(
         min_date: str, # 2007-01-01
@@ -172,15 +174,16 @@ def predict_basic(
         SELECT *
         FROM {GCP_SALESNINJA}.{BQ_DATASET}.data_ml_merged_{int(DATA_SIZE*100)}
         WHERE DateKey BETWEEN '{min_date}' AND '{max_date}'
-        {" ".join([f"AND {product} = {value}" for product, value in zip(keylist, valuelist)])}
-        {"" if grouplist is None else f"GROUP BY {', '.join([group for group in grouplist])}"}
     """
+    #{"" if keylist is None else " ".join([f"AND {key} = 1" for key in keylist])}
+    #{"" if grouplist is None else f"GROUP BY {', '.join([group for group in grouplist])}"}
+    print(query)
     daterange = pd.date_range(pd.to_datetime(min_date, format = "%Y-%m-%d"),
                               pd.to_datetime(max_date, format = "%Y-%m-%d"),
                               freq='d').date.tolist()
 
     data_query_cache_path = Path(LOCAL_DATA_PATH).joinpath("queried",
-            f"query_{min_date}_{max_date}_{int(DATA_SIZE*100)}.csv")
+            f"query_{min_date}_{max_date}_{keylist}_{valuelist}_{grouplist}_{int(DATA_SIZE*100)}.csv")
 
     newdata = SalesNinja().get_data_with_cache(
         query=query,
